@@ -77,6 +77,26 @@ export default function PayslipDetailPage() {
     }
   };
 
+  const [updating, setUpdating] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
+
+  const handleRecomputePayslip = async () => {
+    if (!payslipId) return;
+    setUpdating(true);
+    setError(null);
+    setUpdateSuccess(null);
+    try {
+      const data = await apiRequest<PayslipDetail>(`/payslips/${payslipId}/recompute`, { method: 'POST' });
+      setPayslip(data);
+      setUpdateSuccess('Payslip recalculated and updated successfully.');
+      setTimeout(() => setUpdateSuccess(null), 4000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update payslip');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleDownloadPdf = async () => {
     if (!payslipId) return;
     setDownloadingPdf(true);
@@ -231,23 +251,44 @@ export default function PayslipDetailPage() {
               </span>
             </div>
 
-            <button
-              onClick={handleDownloadPdf}
-              disabled={downloadingPdf}
-              className="btn btn-primary"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: downloadingPdf ? 'not-allowed' : 'pointer' }}
-            >
-              {downloadingPdf ? (
-                <>
-                  <RefreshCw className="animate-spin" size={16} /> Generating PDF...
-                </>
-              ) : (
-                <>
-                  <Download size={16} /> Download PDF
-                </>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {(payslip.status === 'draft' || payslip.status === 'computed') && hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager']) && (
+                <button
+                  onClick={handleRecomputePayslip}
+                  disabled={updating}
+                  className="btn btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+                  title="Recalculate salary rules for this payslip"
+                >
+                  <RefreshCw className={updating ? 'animate-spin' : ''} size={15} />
+                  {updating ? 'Updating...' : 'Recompute / Update'}
+                </button>
               )}
-            </button>
+
+              <button
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+                className="btn btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: downloadingPdf ? 'not-allowed' : 'pointer' }}
+              >
+                {downloadingPdf ? (
+                  <>
+                    <RefreshCw className="animate-spin" size={16} /> Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} /> Download PDF
+                  </>
+                )}
+              </button>
+            </div>
           </div>
+
+          {updateSuccess && (
+            <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', background: 'var(--green-bg)', border: '1px solid var(--green-border)', color: 'var(--green)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <CheckCircle size={16} /> {updateSuccess}
+            </div>
+          )}
 
           {/* Info Columns */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-glass)' }}>

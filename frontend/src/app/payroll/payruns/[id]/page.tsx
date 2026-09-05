@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { 
   DollarSign, ArrowLeft, RefreshCw, CheckCircle, AlertCircle, 
-  Layers, Users, Calendar, Trash2, ChevronDown, ChevronUp, Clock, ShieldCheck, List
+  Layers, Users, Calendar, Trash2, ChevronDown, ChevronUp, Clock, ShieldCheck, List, Edit3
 } from 'lucide-react';
 
 interface PayslipLine {
@@ -74,6 +74,8 @@ export default function PayrunDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedEmployeeId, setExpandedEmployeeId] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
 
   useEffect(() => {
     if (payrunId) {
@@ -141,6 +143,32 @@ export default function PayrunDetailPage() {
       router.push('/payroll/payruns');
     } catch (err: any) {
       setError(err.message || 'Failed to delete payrun');
+      setActionLoading(false);
+    }
+  };
+
+  const openEditModal = () => {
+    if (payrun) {
+      setEditName(payrun.name);
+      setShowEditModal(true);
+    }
+  };
+
+  const handleUpdatePayrun = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim()) return;
+    setActionLoading(true);
+    setError(null);
+    try {
+      const updated = await apiRequest<PayrunDetail>(`/payruns/${payrunId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name: editName.trim() })
+      });
+      setPayrun(updated);
+      setShowEditModal(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update payrun');
+    } finally {
       setActionLoading(false);
     }
   };
@@ -242,11 +270,21 @@ export default function PayrunDetailPage() {
         <div className="glass-panel" style={{ padding: '1.75rem', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                 <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
                   {payrun.name}
                 </h1>
                 {getStatusBadge(payrun.status)}
+                {(payrun.status === 'draft' || payrun.status === 'computed') && hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager']) && (
+                  <button
+                    onClick={openEditModal}
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                    title="Edit payrun details"
+                  >
+                    <Edit3 size={13} /> Edit
+                  </button>
+                )}
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
@@ -493,6 +531,49 @@ export default function PayrunDetailPage() {
             </table>
           </div>
         </div>
+
+        {/* Edit Payrun Modal */}
+        {showEditModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1.5rem' }}>
+            <div className="glass-panel" style={{ width: '100%', maxWidth: '480px', padding: '2rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-main)' }}>
+                Edit Payrun
+              </h2>
+              <form onSubmit={handleUpdatePayrun}>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-main)' }}>
+                    Payrun Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    className="form-input"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="btn btn-secondary"
+                    disabled={actionLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

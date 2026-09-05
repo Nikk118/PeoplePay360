@@ -340,6 +340,12 @@ class PayrunCreate(BaseModel):
     department_id: Optional[str] = None
     employee_type_filter: Optional[str] = None
 
+class PayrunUpdate(BaseModel):
+    name: Optional[str] = None
+
+class PayslipUpdate(BaseModel):
+    notes: Optional[str] = None
+
 class PayrunEligibleEmployeeResponse(BaseModel):
     id: str
     employee_number: str

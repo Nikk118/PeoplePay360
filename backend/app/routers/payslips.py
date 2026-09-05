@@ -1,14 +1,15 @@
 import json
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 
 from app.database import get_db
 from app.models import models
-from app.schemas.schemas import PayslipResponse, PayslipLineResponse
+from app.schemas.schemas import PayslipResponse, PayslipLineResponse, PayslipUpdate
 from app.auth.rbac import get_current_user, require_roles, TokenData
+from app.services.payroll_engine import compute_payroll
 from app.services.pdf_generator import generate_payslip_pdf
 
 router = APIRouter(prefix="/payslips", tags=["Payslips"])
@@ -143,6 +144,93 @@ def get_payslip(
         if payslip.employee_id != current_user.employee_id:
             raise HTTPException(status_code=403, detail="Access denied. You can only view your own payslips.")
 
+    return build_payslip_response(payslip)
+
+
+@router.put("/{payslip_id}", response_model=PayslipResponse)
+@router.post("/{payslip_id}/recompute", response_model=PayslipResponse)
+def update_payslip(
+    payslip_id: str,
+    body: Optional[PayslipUpdate] = None,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
+):
+    """
+    Updates and recomputes a specific payslip for an employee while in draft or computed status.
+    Recalculates worked days, hours, time off deductions, and salary rules.
+    Updates the parent payrun's gross and net totals.
+    Validated or paid payslips cannot be modified.
+    """
+    check_not_hr_manager_only(current_user)
+
+    payslip = db.query(models.Payslip).filter(models.Payslip.id == payslip_id).first()
+    if not payslip:
+        raise HTTPException(status_code=404, detail="Payslip not found")
+
+    if payslip.status in ["validated", "paid"]:
+        raise HTTPException(status_code=400, detail=f"Cannot update a payslip in '{payslip.status}' status")
+
+    try:
+        calc_res = compute_payroll(
+            db=db,
+            employee_id=payslip.employee_id,
+            period_start=payslip.period_start,
+            period_end=payslip.period_end,
+            override_salary_structure_id=payslip.payrun.salary_structure_id if payslip.payrun else None
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Payroll calculation failed: {str(e)}"
+        )
+
+    # Update payslip values
+    payslip.worked_days = calc_res.worked_days
+    payslip.worked_hours = calc_res.worked_hours
+    payslip.basic_salary = calc_res.total_basic
+    payslip.total_allowances = calc_res.total_allowances
+    payslip.gross_salary = calc_res.gross_salary
+    payslip.total_deductions = calc_res.total_deductions
+    payslip.net_salary = calc_res.net_salary
+    payslip.status = "computed"
+    payslip.warnings_json = json.dumps(calc_res.warnings)
+    payslip.updated_at = datetime.utcnow()
+
+    # Clear and recreate lines
+    db.query(models.PayslipLine).filter(models.PayslipLine.payslip_id == payslip.id).delete()
+    db.flush()
+
+    rules_map = {r.code.upper(): r.id for r in payslip.payrun.salary_structure.rules} if (payslip.payrun and payslip.payrun.salary_structure) else {}
+
+    for line in calc_res.salary_lines:
+        rule_id = rules_map.get(line.code.upper())
+        if not rule_id and payslip.payrun and payslip.payrun.salary_structure and payslip.payrun.salary_structure.rules:
+            rule_id = payslip.payrun.salary_structure.rules[0].id
+
+        payslip_line = models.PayslipLine(
+            payslip_id=payslip.id,
+            salary_rule_id=rule_id or "00000000-0000-0000-0000-000000000000",
+            rule_name=line.name,
+            rule_code=line.code,
+            category=line.category,
+            sequence=line.sequence,
+            amount=line.amount
+        )
+        db.add(payslip_line)
+
+    # Update parent payrun totals
+    if payslip.payrun:
+        payrun = payslip.payrun
+        total_gross = sum(float(p.gross_salary or 0.0) if p.id != payslip.id else calc_res.gross_salary for p in payrun.payslips)
+        total_net = sum(float(p.net_salary or 0.0) if p.id != payslip.id else calc_res.net_salary for p in payrun.payslips)
+        payrun.total_gross = round(total_gross, 2)
+        payrun.total_net = round(total_net, 2)
+        if payrun.status == "draft":
+            payrun.status = "computed"
+        payrun.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(payslip)
     return build_payslip_response(payslip)
 
 

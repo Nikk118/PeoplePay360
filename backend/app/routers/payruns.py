@@ -8,7 +8,7 @@ from sqlalchemy import or_, and_, case
 from app.database import get_db
 from app.models import models
 from app.schemas.schemas import (
-    PayrunCreate, PayrunResponse, PayrunEligibleEmployeeResponse,
+    PayrunCreate, PayrunUpdate, PayrunResponse, PayrunEligibleEmployeeResponse,
     PayslipResponse, PayslipLineResponse
 )
 from app.auth.rbac import get_current_user, require_roles, TokenData
@@ -281,6 +281,33 @@ def create_payrun(
         )
         db.add(payslip)
 
+    db.commit()
+    db.refresh(payrun)
+    return build_payrun_response(payrun)
+
+
+@router.put("/{payrun_id}", response_model=PayrunResponse)
+def update_payrun(
+    payrun_id: str,
+    body: PayrunUpdate,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
+):
+    """
+    Updates an existing payrun (e.g. name) while in draft or computed status.
+    Validated or paid payruns cannot be edited.
+    """
+    payrun = db.query(models.Payrun).filter(models.Payrun.id == payrun_id).first()
+    if not payrun:
+        raise HTTPException(status_code=404, detail="Payrun not found")
+
+    if payrun.status in ["validated", "paid"]:
+        raise HTTPException(status_code=400, detail=f"Cannot edit a payrun in '{payrun.status}' status")
+
+    if body.name is not None and body.name.strip():
+        payrun.name = body.name.strip()
+
+    payrun.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(payrun)
     return build_payrun_response(payrun)
