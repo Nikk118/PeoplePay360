@@ -263,47 +263,56 @@ function TimeOffRequestsContent() {
               ) : requests.length === 0 ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>No time off requests found.</td></tr>
               ) : (
-                requests.map(req => (
-                  <tr key={req.id}>
-                    <td>
-                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{req.employee_name || '—'}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{req.department_name}</div>
-                    </td>
-                    <td>
-                      <span className="badge badge-computed">{req.time_off_type_name}</span>
-                    </td>
-                    <td style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--green)' }}>
-                      {req.duration_days} {req.duration_days === 1 ? 'day' : 'days'}
-                    </td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      {req.date_from} to {req.date_to}
-                    </td>
-                    <td style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>
-                      {req.reason || '—'}
-                    </td>
-                    <td>
-                      <span className={`badge badge-${req.status}`}>
-                        {req.status}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      {req.status === 'pending' && hasRole(['hr_manager', 'admin']) ? (
-                        <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
-                          <button onClick={() => handleApprove(req.id)} className="btn-success" style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}>
-                            <CheckCircle size={14} /> Approve
-                          </button>
-                          <button onClick={() => handleRefuse(req.id)} className="btn-danger" style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}>
-                            <XCircle size={14} /> Refuse
-                          </button>
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                          {req.approved_by_name ? `By ${req.approved_by_name}` : '—'}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                requests.map(req => {
+                  const isOwnRequest = Boolean(user?.employee_id && user.employee_id === req.employee_id);
+                  const canApprove = hasRole(['hr_manager', 'hr_payroll_manager', 'admin']) && !(isOwnRequest && !user?.roles.includes('admin'));
+
+                  return (
+                    <tr key={req.id}>
+                      <td>
+                        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{req.employee_name || '—'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{req.department_name}</div>
+                      </td>
+                      <td>
+                        <span className="badge badge-computed">{req.time_off_type_name}</span>
+                      </td>
+                      <td style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--green)' }}>
+                        {req.duration_days} {req.duration_days === 1 ? 'day' : 'days'}
+                      </td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        {req.date_from} to {req.date_to}
+                      </td>
+                      <td style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>
+                        {req.reason || '—'}
+                      </td>
+                      <td>
+                        <span className={`badge badge-${req.status}`}>
+                          {req.status}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        {req.status === 'pending' && canApprove ? (
+                          <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
+                            <button onClick={() => handleApprove(req.id)} className="btn-success" style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}>
+                              <CheckCircle size={14} /> Approve
+                            </button>
+                            <button onClick={() => handleRefuse(req.id)} className="btn-danger" style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}>
+                              <XCircle size={14} /> Refuse
+                            </button>
+                          </div>
+                        ) : req.status === 'pending' && isOwnRequest ? (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
+                            Awaiting Review
+                          </span>
+                        ) : (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                            {req.approved_by_name ? `By ${req.approved_by_name}` : '—'}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

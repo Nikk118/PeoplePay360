@@ -259,11 +259,24 @@ def create_request(
 def approve_request(
     request_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_manager", "admin"]))
 ):
     req = db.query(models.TimeOffRequest).filter(models.TimeOffRequest.id == request_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Leave request not found")
+
+    user_emp_id = current_user.employee_id
+    if not user_emp_id and current_user.user_id:
+        user_record = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+        if user_record:
+            user_emp_id = user_record.employee_id
+
+    # HR Managers cannot approve or refuse their own leave requests
+    if user_emp_id and user_emp_id == req.employee_id and "admin" not in current_user.roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="HR Managers cannot approve or refuse their own leave requests. An HR Payroll Manager or Admin must review it."
+        )
 
     # Double deduction protection: if already approved, return without re-deducting balance
     if req.status == "approved":
@@ -298,7 +311,7 @@ def approve_request(
         req.allocation_id = alloc.id
 
     req.status = "approved"
-    req.approved_by = current_user.employee_id
+    req.approved_by = user_emp_id or current_user.employee_id
     req.response_date = datetime.utcnow()
 
     db.commit()
@@ -309,11 +322,24 @@ def approve_request(
 def refuse_request(
     request_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_manager", "admin"]))
 ):
     req = db.query(models.TimeOffRequest).filter(models.TimeOffRequest.id == request_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Leave request not found")
+
+    user_emp_id = current_user.employee_id
+    if not user_emp_id and current_user.user_id:
+        user_record = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+        if user_record:
+            user_emp_id = user_record.employee_id
+
+    # HR Managers cannot approve or refuse their own leave requests
+    if user_emp_id and user_emp_id == req.employee_id and "admin" not in current_user.roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="HR Managers cannot approve or refuse their own leave requests. An HR Payroll Manager or Admin must review it."
+        )
 
     # If previously approved, restore balance
     if req.status == "approved" and req.allocation_id:
@@ -322,7 +348,7 @@ def refuse_request(
             alloc.taken_days = max(0.0, (alloc.taken_days or 0.0) - req.duration_days)
 
     req.status = "refused"
-    req.approved_by = current_user.employee_id
+    req.approved_by = user_emp_id or current_user.employee_id
     req.response_date = datetime.utcnow()
 
     db.commit()
