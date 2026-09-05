@@ -24,8 +24,8 @@ export default function HomePage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#0B0F19',
-      color: '#9CA3AF',
+      background: 'var(--bg-page)',
+      color: 'var(--text-muted)',
       fontSize: '0.9rem'
     }}>
       Loading PeoplePay360...

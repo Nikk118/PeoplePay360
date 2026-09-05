@@ -150,14 +150,14 @@ function TimeOffRequestsContent() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
       <Navbar />
 
       <main style={{ maxWidth: '1280px', margin: '2rem auto', padding: '0 1.5rem' }}>
         {/* Navigation & Actions */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFF' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
               Time Off Requests & Approvals
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
@@ -199,14 +199,14 @@ function TimeOffRequestsContent() {
             {balances.map(b => (
               <div key={b.time_off_type_id} className="glass-card" style={{ padding: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: 700, color: '#FFF' }}>{b.type_name}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{b.type_name}</span>
                   <span className="badge badge-active" style={{ fontSize: '0.7rem' }}>{b.type_code}</span>
                 </div>
 
                 {b.requires_allocation ? (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.5rem' }}>
                     <div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--green)', fontFamily: 'var(--font-mono)' }}>
                         {b.remaining_days} <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-muted)' }}>days remaining</span>
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>
@@ -215,7 +215,7 @@ function TimeOffRequestsContent() {
                     </div>
                   </div>
                 ) : (
-                  <div style={{ fontSize: '0.85rem', color: '#60A5FA', marginTop: '0.5rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--primary)', marginTop: '0.5rem', fontWeight: 600 }}>
                     No allocation required (Payroll affected)
                   </div>
                 )}
@@ -266,13 +266,13 @@ function TimeOffRequestsContent() {
                 requests.map(req => (
                   <tr key={req.id}>
                     <td>
-                      <div style={{ fontWeight: 600, color: '#FFF' }}>{req.employee_name || '—'}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{req.employee_name || '—'}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{req.department_name}</div>
                     </td>
                     <td>
                       <span className="badge badge-computed">{req.time_off_type_name}</span>
                     </td>
-                    <td style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#34D399' }}>
+                    <td style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--green)' }}>
                       {req.duration_days} {req.duration_days === 1 ? 'day' : 'days'}
                     </td>
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -313,7 +313,7 @@ function TimeOffRequestsContent() {
         {showModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1.5rem' }}>
             <div className="glass-card" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#FFF', marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem' }}>
                 Submit Time Off Request
               </h2>
 

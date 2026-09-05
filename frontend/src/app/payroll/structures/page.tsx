@@ -142,7 +142,7 @@ export default function SalaryStructuresPage() {
   const canManage = hasRole(['admin', 'hr_manager', 'hr_payroll_manager']);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-dark)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
       <Navbar />
 
       <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1.5rem' }}>
@@ -159,8 +159,8 @@ export default function SalaryStructuresPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
               <span className="badge badge-active" style={{ fontSize: '0.75rem' }}>Payroll Configuration</span>
             </div>
-            <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: '#FFF', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <Layers size={28} color="#3B82F6" />
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Layers size={28} color="var(--primary)" />
               Salary Structures
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
@@ -183,15 +183,15 @@ export default function SalaryStructuresPage() {
         {/* Global Error Notification */}
         {error && (
           <div style={{
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            background: 'var(--red-bg)',
+            border: '1px solid var(--red-border)',
             borderRadius: 'var(--radius-lg)',
             padding: '1rem 1.25rem',
             marginBottom: '1.5rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
-            color: '#F87171'
+            color: 'var(--red)'
           }}>
             <AlertCircle size={20} />
             <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{error}</span>
@@ -205,7 +205,7 @@ export default function SalaryStructuresPage() {
           justifyContent: 'space-between',
           gap: '1rem',
           marginBottom: '1.5rem',
-          background: 'rgba(31, 41, 55, 0.5)',
+          background: 'var(--bg-card)',
           padding: '1rem',
           borderRadius: 'var(--radius-lg)',
           border: '1px solid var(--border-glass)'
@@ -236,19 +236,19 @@ export default function SalaryStructuresPage() {
         {/* Structures List Grid */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text-muted)' }}>
-            <div className="animate-spin" style={{ width: '2rem', height: '2rem', border: '3px solid rgba(59, 130, 246, 0.3)', borderTopColor: '#3B82F6', borderRadius: '50%', margin: '0 auto 1rem' }} />
+            <div className="animate-spin" style={{ width: '2rem', height: '2rem', border: '3px solid rgba(59, 130, 246, 0.3)', borderTopColor: 'var(--primary)', borderRadius: '50%', margin: '0 auto 1rem' }} />
             Loading salary structures...
           </div>
         ) : filteredStructures.length === 0 ? (
           <div style={{
             textAlign: 'center',
             padding: '4rem 2rem',
-            background: 'rgba(31, 41, 55, 0.4)',
+            background: 'var(--bg-card)',
             borderRadius: 'var(--radius-xl)',
-            border: '1px border-dashed var(--border-glass)'
+            border: '1px dashed var(--border-glass)'
           }}>
             <Layers size={48} color="var(--text-dim)" style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#FFF' }}>No Salary Structures Found</h3>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-main)' }}>No Salary Structures Found</h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.35rem' }}>
               {searchQuery ? 'No structures match your search criteria.' : 'Create your first salary structure to define payroll calculation rules.'}
             </p>
@@ -275,14 +275,14 @@ export default function SalaryStructuresPage() {
                       <span className={`badge ${struct.active ? 'badge-active' : 'badge-inactive'}`} style={{ fontSize: '0.7rem', marginBottom: '0.5rem', display: 'inline-block' }}>
                         {struct.active ? 'Active' : 'Inactive'}
                       </span>
-                      <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#FFF', lineHeight: 1.3 }}>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.3 }}>
                         {struct.name}
                       </h3>
                     </div>
                     <span style={{
-                      background: 'rgba(59, 130, 246, 0.15)',
-                      color: '#60A5FA',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'var(--blue-bg)',
+                      color: 'var(--blue)',
+                      border: '1px solid var(--blue-border)',
                       padding: '0.25rem 0.65rem',
                       borderRadius: 'var(--radius-full)',
                       fontSize: '0.75rem',
@@ -310,11 +310,11 @@ export default function SalaryStructuresPage() {
                     <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                       {struct.rules.slice(0, 5).map((rule) => (
                         <span key={rule.id} style={{
-                          background: 'rgba(255, 255, 255, 0.05)',
+                          background: 'var(--bg-page)',
                           border: '1px solid var(--border-glass)',
                           fontSize: '0.7rem',
                           fontFamily: 'monospace',
-                          color: '#E5E7EB',
+                          color: 'var(--text-main)',
                           padding: '0.15rem 0.45rem',
                           borderRadius: '0.25rem'
                         }}>
@@ -392,14 +392,14 @@ export default function SalaryStructuresPage() {
           padding: '1rem'
         }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
-            <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#FFF', marginBottom: '1.25rem' }}>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem' }}>
               {editingStruct ? 'Edit Salary Structure' : 'Create Salary Structure'}
             </h2>
 
             <form onSubmit={handleSaveStructure}>
               <div style={{ marginBottom: '1.25rem' }}>
                 <label className="form-label" style={{ display: 'block', marginBottom: '0.4rem' }}>
-                  Structure Name <span style={{ color: '#EF4444' }}>*</span>
+                  Structure Name <span style={{ color: 'var(--red)' }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -432,9 +432,9 @@ export default function SalaryStructuresPage() {
                   id="struct-active"
                   checked={active}
                   onChange={(e) => setActive(e.target.checked)}
-                  style={{ width: '1.1rem', height: '1.1rem', accentColor: '#3B82F6', cursor: 'pointer' }}
+                  style={{ width: '1.1rem', height: '1.1rem', accentColor: 'var(--primary)', cursor: 'pointer' }}
                 />
-                <label htmlFor="struct-active" style={{ color: '#FFF', fontSize: '0.9rem', cursor: 'pointer', fontWeight: 500 }}>
+                <label htmlFor="struct-active" style={{ color: 'var(--text-main)', fontSize: '0.9rem', cursor: 'pointer', fontWeight: 500 }}>
                   Active Structure (Available for contract assignment)
                 </label>
               </div>
@@ -478,23 +478,23 @@ export default function SalaryStructuresPage() {
           padding: '1rem'
         }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '480px', padding: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', color: '#EF4444' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', color: 'var(--red)' }}>
               <AlertCircle size={28} />
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFF' }}>Delete Salary Structure</h3>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)' }}>Delete Salary Structure</h3>
             </div>
 
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '1.25rem' }}>
-              Are you sure you want to delete <strong style={{ color: '#FFF' }}>{deletingStruct.name}</strong>? This action will also delete all associated rules within this structure.
+              Are you sure you want to delete <strong style={{ color: 'var(--text-main)' }}>{deletingStruct.name}</strong>? This action will also delete all associated rules within this structure.
             </p>
 
             {deleteError && (
               <div style={{
-                background: 'rgba(239, 68, 68, 0.15)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                background: 'var(--red-bg)',
+                border: '1px solid var(--red-border)',
                 borderRadius: 'var(--radius-md)',
                 padding: '0.75rem 1rem',
                 marginBottom: '1.25rem',
-                color: '#F87171',
+                color: 'var(--red)',
                 fontSize: '0.85rem'
               }}>
                 {deleteError}

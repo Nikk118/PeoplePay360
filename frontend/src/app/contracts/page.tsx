@@ -153,14 +153,14 @@ function ContractsContent() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
       <Navbar />
 
       <main style={{ maxWidth: '1280px', margin: '2rem auto', padding: '0 1.5rem' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFF' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
               Contract Management
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
@@ -183,7 +183,7 @@ function ContractsContent() {
 
         {/* Period-Based Contract Resolver Interactive Tool */}
         <div className="glass-card" style={{ padding: '1.25rem', marginBottom: '1.75rem', borderColor: 'rgba(59, 130, 246, 0.3)' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#60A5FA', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <CheckCircle size={16} /> Applicable Contract Resolver (Payroll Test Engine)
           </div>
 
@@ -270,7 +270,7 @@ function ContractsContent() {
                 contracts.map(c => (
                   <tr key={c.id}>
                     <td>
-                      <div style={{ fontWeight: 700, color: '#FFF' }}>{c.name}</div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{c.name}</div>
                       {c.has_overlap_warning && (
                         <span className="badge badge-refused" style={{ fontSize: '0.65rem', marginTop: '0.25rem' }}>
                           <AlertTriangle size={12} /> Overlapping Active Contract
@@ -278,11 +278,11 @@ function ContractsContent() {
                       )}
                     </td>
                     <td>
-                      <div style={{ fontWeight: 600, color: '#FFF' }}>{c.employee_name || '—'}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{c.employee_name || '—'}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{c.job_title}</div>
                     </td>
                     <td>
-                      <div style={{ fontWeight: 700, color: '#34D399', fontFamily: 'var(--font-mono)' }}>
+                      <div style={{ fontWeight: 700, color: 'var(--green)', fontFamily: 'var(--font-mono)' }}>
                         ₹{c.wage.toLocaleString()}
                       </div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'capitalize' }}>
@@ -316,7 +316,7 @@ function ContractsContent() {
         {showModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1.5rem' }}>
             <div className="glass-card" style={{ width: '100%', maxWidth: '600px', padding: '2rem' }}>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#FFF', marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem' }}>
                 Issue New Employment Contract
               </h2>
 

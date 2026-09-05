@@ -109,7 +109,7 @@ export default function ContractEditPage() {
         </Link>
 
         {contract.has_overlap_warning && (
-          <div style={{ background: 'rgba(244, 63, 94, 0.15)', border: '1px solid rgba(244, 63, 94, 0.3)', color: '#F87171', padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red-border)', color: 'var(--red)', padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <AlertTriangle size={20} />
             <div>
               <strong>Overlapping Active Contract Warning:</strong> This employee has another active contract covering overlapping dates. Please verify contract start/end dates.
@@ -118,7 +118,7 @@ export default function ContractEditPage() {
         )}
 
         {successMsg && (
-          <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34D399', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+          <div style={{ background: 'var(--green-bg)', border: '1px solid var(--green-border)', color: 'var(--green)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
             {successMsg}
           </div>
         )}
@@ -126,11 +126,11 @@ export default function ContractEditPage() {
         <div className="glass-card" style={{ padding: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FFF' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 {contract.name}
               </h1>
               <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                Employee: <strong style={{ color: '#FFF' }}>{contract.employee_name}</strong>
+                Employee: <strong style={{ color: 'var(--text-main)' }}>{contract.employee_name}</strong>
               </div>
             </div>
             <span className={`badge badge-${contract.status}`}>

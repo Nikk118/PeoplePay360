@@ -80,25 +80,25 @@ export default function PayslipsListPage() {
     switch (status) {
       case 'draft':
         return (
-          <span className="badge" style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#FACC15', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+          <span className="badge" style={{ background: 'var(--yellow-bg)', color: 'var(--yellow)', border: '1px solid var(--yellow-border)' }}>
             <Clock size={12} style={{ marginRight: '4px' }} /> Draft
           </span>
         );
       case 'computed':
         return (
-          <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+          <span className="badge" style={{ background: 'var(--blue-bg)', color: 'var(--blue)', border: '1px solid var(--blue-border)' }}>
             <RefreshCw size={12} style={{ marginRight: '4px' }} /> Computed
           </span>
         );
       case 'validated':
         return (
-          <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#C084FC', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+          <span className="badge" style={{ background: 'var(--purple-bg)', color: 'var(--purple)', border: '1px solid var(--purple-border)' }}>
             <CheckCircle size={12} style={{ marginRight: '4px' }} /> Validated
           </span>
         );
       case 'paid':
         return (
-          <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#4ADE80', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+          <span className="badge" style={{ background: 'var(--green-bg)', color: 'var(--green)', border: '1px solid var(--green-border)' }}>
             <DollarSign size={12} style={{ marginRight: '4px' }} /> Paid
           </span>
         );
@@ -106,14 +106,14 @@ export default function PayslipsListPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', color: 'var(--text-main)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
       <Navbar />
 
       <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1.5rem' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#60A5FA', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>
               <FileText size={16} /> Employee Payslips
             </div>
             <h1 style={{ fontSize: '1.875rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>
@@ -162,8 +162,8 @@ export default function PayslipsListPage() {
                     fontSize: '0.8rem',
                     fontWeight: 600,
                     textTransform: 'capitalize',
-                    border: statusFilter === st ? '1px solid #3B82F6' : '1px solid var(--border-glass)',
-                    background: statusFilter === st ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                    border: statusFilter === st ? '1px solid var(--primary)' : '1px solid var(--border-glass)',
+                    background: statusFilter === st ? 'var(--primary)' : 'transparent',
                     color: statusFilter === st ? '#FFF' : 'var(--text-muted)',
                     cursor: 'pointer'
                   }}
@@ -177,7 +177,7 @@ export default function PayslipsListPage() {
 
         {/* Error Notification */}
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#F87171', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red-border)', color: 'var(--red)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <AlertCircle size={18} />
             <span>{error}</span>
           </div>
@@ -186,7 +186,7 @@ export default function PayslipsListPage() {
         {/* Loading State */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text-muted)' }}>
-            <RefreshCw className="animate-spin" size={32} style={{ margin: '0 auto 1rem', color: '#3B82F6' }} />
+            <RefreshCw className="animate-spin" size={32} style={{ margin: '0 auto 1rem', color: 'var(--primary)' }} />
             <p>Loading payslips...</p>
           </div>
         ) : filteredPayslips.length === 0 ? (
@@ -216,31 +216,31 @@ export default function PayslipsListPage() {
               </thead>
               <tbody>
                 {filteredPayslips.map(ps => (
-                  <tr key={ps.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', transition: 'background 0.15s' }}>
+                  <tr key={ps.id} style={{ borderBottom: '1px solid var(--border-glass)', transition: 'background 0.15s' }}>
                     <td style={{ padding: '0.85rem 0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                       {ps.employee_number || 'EMP'}
                     </td>
                     <td style={{ padding: '0.85rem 0.75rem' }}>
-                      <div style={{ fontWeight: 700, color: '#FFF' }}>{ps.employee_name || 'Employee'}</div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{ps.employee_name || 'Employee'}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{ps.department_name || 'General'}</div>
                     </td>
                     <td style={{ padding: '0.85rem 0.75rem' }}>
-                      <div style={{ fontWeight: 600, color: '#60A5FA', fontSize: '0.8rem' }}>{ps.payrun_name || 'Payrun'}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--primary)', fontSize: '0.8rem' }}>{ps.payrun_name || 'Payrun'}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{ps.period_start} to {ps.period_end}</div>
                     </td>
-                    <td style={{ padding: '0.85rem 0.75rem', color: '#FFF' }}>
+                    <td style={{ padding: '0.85rem 0.75rem', color: 'var(--text-main)', fontWeight: 600 }}>
                       Rs. {(ps.basic_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td style={{ padding: '0.85rem 0.75rem', color: '#34D399' }}>
+                    <td style={{ padding: '0.85rem 0.75rem', color: 'var(--green)', fontWeight: 600 }}>
                       +Rs. {(ps.total_allowances || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td style={{ padding: '0.85rem 0.75rem', color: '#F87171' }}>
+                    <td style={{ padding: '0.85rem 0.75rem', color: 'var(--red)', fontWeight: 600 }}>
                       -Rs. {(ps.total_deductions || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td style={{ padding: '0.85rem 0.75rem', fontWeight: 700, color: '#FFF' }}>
+                    <td style={{ padding: '0.85rem 0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
                       Rs. {(ps.gross_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td style={{ padding: '0.85rem 0.75rem', fontWeight: 800, color: '#4ADE80', fontSize: '0.95rem' }}>
+                    <td style={{ padding: '0.85rem 0.75rem', fontWeight: 800, color: 'var(--green)', fontSize: '0.95rem' }}>
                       Rs. {(ps.net_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td style={{ padding: '0.85rem 0.75rem' }}>

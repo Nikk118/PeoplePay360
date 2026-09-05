@@ -116,13 +116,13 @@ export default function WorkingSchedulesPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
       <Navbar />
 
       <main style={{ maxWidth: '1280px', margin: '2rem auto', padding: '0 1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFF' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
               Working Schedules
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
@@ -149,7 +149,7 @@ export default function WorkingSchedulesPage() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                     <div>
-                      <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#FFF' }}>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)' }}>
                         {sched.name}
                       </h3>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'capitalize', marginTop: '0.2rem' }}>
@@ -157,8 +157,8 @@ export default function WorkingSchedulesPage() {
                       </div>
                     </div>
 
-                    <div style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', textAlign: 'right' }}>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#60A5FA', fontFamily: 'var(--font-mono)' }}>
+                    <div style={{ background: 'var(--blue-bg)', border: '1px solid var(--blue-border)', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', textAlign: 'right' }}>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--blue)', fontFamily: 'var(--font-mono)' }}>
                         {sched.weekly_hours} hrs
                       </div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Weekly Hours</div>
@@ -170,10 +170,10 @@ export default function WorkingSchedulesPage() {
                     {DAYS_OF_WEEK.map((dayName, idx) => {
                       const line = sched.lines.find(l => l.day_of_week === idx);
                       return (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '0.3rem 0.5rem', borderRadius: 'var(--radius-sm)', background: line ? 'rgba(255, 255, 255, 0.03)' : 'transparent', opacity: line ? 1 : 0.4 }}>
-                          <span style={{ fontWeight: 600, color: line ? '#FFF' : 'var(--text-dim)' }}>{dayName}</span>
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '0.3rem 0.5rem', borderRadius: 'var(--radius-sm)', background: line ? 'var(--bg-page)' : 'transparent', opacity: line ? 1 : 0.5 }}>
+                          <span style={{ fontWeight: 600, color: line ? 'var(--text-main)' : 'var(--text-dim)' }}>{dayName}</span>
                           {line ? (
-                            <span style={{ fontFamily: 'var(--font-mono)', color: '#34D399' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--green)', fontWeight: 600 }}>
                               {line.start_time.slice(0,5)} – {line.end_time.slice(0,5)} ({line.break_duration_minutes}m break)
                             </span>
                           ) : (
@@ -194,10 +194,10 @@ export default function WorkingSchedulesPage() {
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1.5rem' }}>
             <div className="glass-card" style={{ width: '100%', maxWidth: '650px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#FFF' }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)' }}>
                   Define Weekly Working Schedule
                 </h2>
-                <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-md)', color: '#34D399', fontSize: '0.85rem', fontWeight: 700 }}>
+                <div style={{ background: 'var(--green-bg)', border: '1px solid var(--green-border)', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-md)', color: 'var(--green)', fontSize: '0.85rem', fontWeight: 700 }}>
                   Derived Total: {calculatePreviewHours()} hrs/week
                 </div>
               </div>
@@ -219,7 +219,7 @@ export default function WorkingSchedulesPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#FFF', marginBottom: '0.75rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.75rem' }}>
                     Weekly Working Days & Shift Timings
                   </label>
 
@@ -227,14 +227,14 @@ export default function WorkingSchedulesPage() {
                     {DAYS_OF_WEEK.map((dayName, idx) => {
                       const activeLine = lines.find(l => l.day_of_week === idx);
                       return (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', background: activeLine ? 'rgba(59, 130, 246, 0.08)' : 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-glass)' }}>
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', background: activeLine ? 'rgba(37, 99, 235, 0.08)' : 'var(--bg-page)', border: '1px solid var(--border-glass)' }}>
                           <input
                             type="checkbox"
                             checked={!!activeLine}
                             onChange={() => toggleDay(idx)}
                             style={{ width: '1.1rem', height: '1.1rem', cursor: 'pointer' }}
                           />
-                          <span style={{ width: '90px', fontWeight: 600, fontSize: '0.85rem', color: activeLine ? '#FFF' : 'var(--text-dim)' }}>
+                          <span style={{ width: '90px', fontWeight: 600, fontSize: '0.85rem', color: activeLine ? 'var(--text-main)' : 'var(--text-dim)' }}>
                             {dayName}
                           </span>
 

@@ -117,8 +117,8 @@ export default function Navbar() {
             fontSize: '0.8rem',
             color: '#6B7280',
           }}>
-            <Shield size={14} color="#1E3A5F" />
-            <span style={{ fontWeight: 600, color: '#1A1D23' }}>{user.email.split('@')[0]}</span>
+            <Shield size={14} color="var(--primary)" />
+            <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{user.email.split('@')[0]}</span>
             <span style={{
               background: '#EBF0F7',
               color: '#1E3A5F',

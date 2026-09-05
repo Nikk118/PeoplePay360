@@ -153,25 +153,25 @@ export default function PayrunDetailPage() {
     switch (status) {
       case 'draft':
         return (
-          <span className="badge" style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#FACC15', border: '1px solid rgba(234, 179, 8, 0.3)', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
+          <span className="badge" style={{ background: 'var(--yellow-bg)', color: 'var(--yellow)', border: '1px solid var(--yellow-border)', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
             <Clock size={14} style={{ marginRight: '6px' }} /> Draft
           </span>
         );
       case 'computed':
         return (
-          <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
+          <span className="badge" style={{ background: 'var(--blue-bg)', color: 'var(--blue)', border: '1px solid var(--blue-border)', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
             <RefreshCw size={14} style={{ marginRight: '6px' }} /> Computed
           </span>
         );
       case 'validated':
         return (
-          <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#C084FC', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
+          <span className="badge" style={{ background: 'var(--purple-bg)', color: 'var(--purple)', border: '1px solid var(--purple-border)', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
             <CheckCircle size={14} style={{ marginRight: '6px' }} /> Validated
           </span>
         );
       case 'paid':
         return (
-          <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#4ADE80', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
+          <span className="badge" style={{ background: 'var(--green-bg)', color: 'var(--green)', border: '1px solid var(--green-border)', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
             <DollarSign size={14} style={{ marginRight: '6px' }} /> Payment Completed
           </span>
         );
@@ -180,10 +180,10 @@ export default function PayrunDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', color: 'var(--text-main)' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
         <Navbar />
         <div style={{ textAlign: 'center', padding: '6rem 0', color: 'var(--text-muted)' }}>
-          <RefreshCw className="animate-spin" size={32} style={{ margin: '0 auto 1rem', color: '#3B82F6' }} />
+          <RefreshCw className="animate-spin" size={32} style={{ margin: '0 auto 1rem', color: 'var(--primary)' }} />
           <p>Loading payrun details...</p>
         </div>
       </div>
@@ -192,10 +192,10 @@ export default function PayrunDetailPage() {
 
   if (!payrun) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', color: 'var(--text-main)' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
         <Navbar />
         <div style={{ maxWidth: '800px', margin: '4rem auto', padding: '2rem', textAlign: 'center' }}>
-          <AlertCircle size={48} color="#F87171" style={{ margin: '0 auto 1rem' }} />
+          <AlertCircle size={48} color="var(--red)" style={{ margin: '0 auto 1rem' }} />
           <h2>Payrun Not Found</h2>
           <Link href="/payroll/payruns" className="btn btn-secondary" style={{ marginTop: '1rem', textDecoration: 'none', display: 'inline-block' }}>
             Back to Payruns List
@@ -206,7 +206,7 @@ export default function PayrunDetailPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', color: 'var(--text-main)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
       <Navbar />
 
       <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1.5rem' }}>
@@ -223,7 +223,7 @@ export default function PayrunDetailPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, color: '#FFF' }}>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
                   {payrun.name}
                 </h1>
                 {getStatusBadge(payrun.status)}
@@ -231,17 +231,17 @@ export default function PayrunDetailPage() {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Calendar size={15} color="#60A5FA" />
+                  <Calendar size={15} color="var(--primary)" />
                   <span>Period: <strong>{payrun.period_start}</strong> to <strong>{payrun.period_end}</strong></span>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Layers size={15} color="#A78BFA" />
+                  <Layers size={15} color="var(--purple)" />
                   <span>Structure: <strong>{payrun.salary_structure_name || 'Salary Structure'}</strong></span>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Users size={15} color="#34D399" />
+                  <Users size={15} color="var(--green)" />
                   <span>Employees: <strong>{payrun.payslip_count} selected</strong></span>
                 </div>
               </div>
@@ -256,7 +256,7 @@ export default function PayrunDetailPage() {
                       onClick={handleDelete}
                       disabled={actionLoading}
                       className="btn btn-secondary"
-                      style={{ color: '#F87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                      style={{ color: 'var(--red)', border: '1px solid var(--red-border)' }}
                     >
                       <Trash2 size={16} /> Delete
                     </button>
@@ -313,16 +313,16 @@ export default function PayrunDetailPage() {
 
           {/* Financial Totals Widget */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-glass)' }}>
-            <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ background: 'var(--bg-page)', border: '1px solid var(--border-glass)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>Total Gross Salary</span>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFF', marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.2rem' }}>
                 Rs. {(payrun.total_gross || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
             </div>
 
-            <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ background: 'var(--bg-page)', border: '1px solid var(--border-glass)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>Total Net Payable</span>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#4ADE80', marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--green)', marginTop: '0.2rem' }}>
                 Rs. {(payrun.total_net || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
             </div>
@@ -331,7 +331,7 @@ export default function PayrunDetailPage() {
 
         {/* Error Notification */}
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#F87171', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red-border)', color: 'var(--red)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <AlertCircle size={18} />
             <span>{error}</span>
           </div>
@@ -340,11 +340,11 @@ export default function PayrunDetailPage() {
         {/* Selected Employees & Payslips Table */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <List size={18} color="#60A5FA" /> Calculated Employee Payslips ({payrun.payslips.length})
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)' }}>
+              <List size={18} color="var(--primary)" /> Calculated Employee Payslips ({payrun.payslips.length})
             </h3>
             {payrun.status === 'draft' && (
-              <span style={{ fontSize: '0.8rem', color: '#FACC15' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--yellow)', fontWeight: 600 }}>
                 ⚠️ Draft status: Click "Compute Payroll" above to execute salary rules.
               </span>
             )}
@@ -370,30 +370,30 @@ export default function PayrunDetailPage() {
                   const isExpanded = expandedEmployeeId === ps.employee_id;
                   return (
                     <React.Fragment key={ps.id}>
-                      <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', background: isExpanded ? 'rgba(59, 130, 246, 0.08)' : 'transparent' }}>
+                      <tr style={{ borderBottom: '1px solid var(--border-glass)', background: isExpanded ? 'rgba(37, 99, 235, 0.06)' : 'transparent' }}>
                         <td style={{ padding: '0.85rem 0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                           {ps.employee_number || 'EMP'}
                         </td>
                         <td style={{ padding: '0.85rem 0.75rem' }}>
-                          <div style={{ fontWeight: 700, color: '#FFF' }}>{ps.employee_name || 'Employee'}</div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{ps.employee_name || 'Employee'}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{ps.department_name || 'General'}</div>
                         </td>
                         <td style={{ padding: '0.85rem 0.75rem', color: 'var(--text-muted)' }}>
                           {ps.worked_days}d / {ps.worked_hours}h
                         </td>
-                        <td style={{ padding: '0.85rem 0.75rem', color: '#FFF' }}>
+                        <td style={{ padding: '0.85rem 0.75rem', color: 'var(--text-main)', fontWeight: 600 }}>
                           Rs. {ps.basic_salary.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </td>
-                        <td style={{ padding: '0.85rem 0.75rem', color: '#34D399' }}>
+                        <td style={{ padding: '0.85rem 0.75rem', color: 'var(--green)', fontWeight: 600 }}>
                           +Rs. {ps.total_allowances.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </td>
-                        <td style={{ padding: '0.85rem 0.75rem', color: '#F87171' }}>
+                        <td style={{ padding: '0.85rem 0.75rem', color: 'var(--red)', fontWeight: 600 }}>
                           -Rs. {ps.total_deductions.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </td>
-                        <td style={{ padding: '0.85rem 0.75rem', fontWeight: 700, color: '#FFF' }}>
+                        <td style={{ padding: '0.85rem 0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
                           Rs. {ps.gross_salary.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </td>
-                        <td style={{ padding: '0.85rem 0.75rem', fontWeight: 800, color: '#4ADE80', fontSize: '0.95rem' }}>
+                        <td style={{ padding: '0.85rem 0.75rem', fontWeight: 800, color: 'var(--green)', fontSize: '0.95rem' }}>
                           Rs. {ps.net_salary.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </td>
                         <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center' }}>
@@ -410,14 +410,14 @@ export default function PayrunDetailPage() {
                       {/* Expandable Payslip Rule Lines */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan={9} style={{ padding: '1rem', background: 'rgba(0, 0, 0, 0.3)', borderBottom: '1px solid var(--border-glass)' }}>
+                          <td colSpan={9} style={{ padding: '1rem', background: 'var(--bg-page)', borderBottom: '1px solid var(--border-glass)' }}>
                             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                              <h5 style={{ margin: '0 0 0.75rem', fontSize: '0.85rem', fontWeight: 700, color: '#60A5FA', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <h5 style={{ margin: '0 0 0.75rem', fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                 <Layers size={14} /> Calculated Rule Breakdown for {ps.employee_name}
                               </h5>
 
                               {ps.warnings && ps.warnings.length > 0 && (
-                                <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FBBF24', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
+                                <div style={{ background: 'var(--yellow-bg)', border: '1px solid var(--yellow-border)', color: 'var(--yellow)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
                                   ⚠️ {ps.warnings.join(', ')}
                                 </div>
                               )}
@@ -428,7 +428,7 @@ export default function PayrunDetailPage() {
                                     <div
                                       key={line.id}
                                       style={{
-                                        background: 'rgba(255, 255, 255, 0.04)',
+                                        background: 'var(--bg-card)',
                                         border: '1px solid var(--border-glass)',
                                         padding: '0.5rem 0.75rem',
                                         borderRadius: 'var(--radius-md)',
@@ -438,7 +438,7 @@ export default function PayrunDetailPage() {
                                       }}
                                     >
                                       <div>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#FFF', display: 'block' }}>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', display: 'block' }}>
                                           [{line.sequence}] {line.rule_code}
                                         </span>
                                         <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'capitalize' }}>
@@ -448,7 +448,7 @@ export default function PayrunDetailPage() {
                                       <span style={{
                                         fontSize: '0.85rem',
                                         fontWeight: 700,
-                                        color: line.category === 'deduction' ? '#F87171' : line.category === 'net' ? '#4ADE80' : '#FFF'
+                                        color: line.category === 'deduction' ? 'var(--red)' : line.category === 'net' ? 'var(--green)' : 'var(--text-main)'
                                       }}>
                                         Rs. {line.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                       </span>

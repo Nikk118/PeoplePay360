@@ -212,8 +212,8 @@ export default function CreatePayrunPage() {
             flex: 1,
             padding: '1rem',
             borderRadius: 'var(--radius-md)',
-            background: step === 1 ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-            border: step === 1 ? '1px solid #3B82F6' : '1px solid var(--border-glass)',
+            background: step === 1 ? 'rgba(37, 99, 235, 0.08)' : 'var(--bg-card)',
+            border: step === 1 ? '1px solid var(--primary)' : '1px solid var(--border-glass)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem'
@@ -222,8 +222,8 @@ export default function CreatePayrunPage() {
               width: '2.25rem',
               height: '2.25rem',
               borderRadius: '50%',
-              background: step === 1 ? '#3B82F6' : step > 1 ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
-              color: '#FFF',
+              background: step === 1 ? 'var(--primary)' : step > 1 ? 'var(--green)' : 'var(--border-glass)',
+              color: step === 1 || step > 1 ? '#FFF' : 'var(--text-dim)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -233,7 +233,7 @@ export default function CreatePayrunPage() {
             </div>
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>Step 1</span>
-              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: step === 1 ? '#FFF' : 'var(--text-muted)' }}>
+              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: step === 1 ? 'var(--primary)' : 'var(--text-muted)' }}>
                 Payroll Configuration
               </h4>
             </div>
@@ -245,8 +245,8 @@ export default function CreatePayrunPage() {
             flex: 1,
             padding: '1rem',
             borderRadius: 'var(--radius-md)',
-            background: step === 2 ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-            border: step === 2 ? '1px solid #3B82F6' : '1px solid var(--border-glass)',
+            background: step === 2 ? 'rgba(37, 99, 235, 0.08)' : 'var(--bg-card)',
+            border: step === 2 ? '1px solid var(--primary)' : '1px solid var(--border-glass)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem'
@@ -255,8 +255,8 @@ export default function CreatePayrunPage() {
               width: '2.25rem',
               height: '2.25rem',
               borderRadius: '50%',
-              background: step === 2 ? '#3B82F6' : 'rgba(255, 255, 255, 0.1)',
-              color: '#FFF',
+              background: step === 2 ? 'var(--primary)' : 'var(--border-glass)',
+              color: step === 2 ? '#FFF' : 'var(--text-dim)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -266,7 +266,7 @@ export default function CreatePayrunPage() {
             </div>
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>Step 2</span>
-              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: step === 2 ? '#FFF' : 'var(--text-muted)' }}>
+              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: step === 2 ? 'var(--primary)' : 'var(--text-muted)' }}>
                 Employee Selection
               </h4>
             </div>
@@ -275,7 +275,7 @@ export default function CreatePayrunPage() {
 
         {/* Error Notification */}
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#F87171', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red-border)', color: 'var(--red)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <AlertCircle size={18} />
             <span>{error}</span>
           </div>
@@ -284,8 +284,8 @@ export default function CreatePayrunPage() {
         {/* STEP 1 FORM */}
         {step === 1 && (
           <form onSubmit={handleProceedToStep2} className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Layers size={18} color="#60A5FA" /> Configure Payroll Parameters
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)' }}>
+              <Layers size={18} color="var(--primary)" /> Configure Payroll Parameters
             </h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem' }}>
@@ -399,8 +399,8 @@ export default function CreatePayrunPage() {
           <div className="glass-panel" style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Users size={18} color="#34D399" /> Select Employees for {name}
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)' }}>
+                  <Users size={18} color="var(--primary)" /> Select Employees for {name}
                 </h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>
                   Explicitly check the employees to include. Employees without applicable contracts are highlighted and disabled.
@@ -426,8 +426,8 @@ export default function CreatePayrunPage() {
             </div>
 
             {/* Selection Counter */}
-            <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#60A5FA' }}>
+            <div style={{ background: 'rgba(37, 99, 235, 0.08)', border: '1px solid rgba(37, 99, 235, 0.2)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary)' }}>
                 {selectedEmpIds.length} of {eligibleEmployees.length} employees selected
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -455,8 +455,8 @@ export default function CreatePayrunPage() {
                       <tr
                         key={emp.id}
                         style={{
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                          background: !emp.has_applicable_contract ? 'rgba(239, 68, 68, 0.05)' : isSelected ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+                          borderBottom: '1px solid var(--border-glass)',
+                          background: !emp.has_applicable_contract ? 'var(--red-bg)' : isSelected ? 'rgba(37, 99, 235, 0.06)' : 'transparent',
                           cursor: emp.has_applicable_contract ? 'pointer' : 'not-allowed'
                         }}
                         onClick={() => toggleEmployeeSelect(emp.id, emp.has_applicable_contract)}
@@ -474,7 +474,7 @@ export default function CreatePayrunPage() {
                         <td style={{ padding: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                           {emp.employee_number}
                         </td>
-                        <td style={{ padding: '0.75rem', fontWeight: 700, color: '#FFF' }}>
+                        <td style={{ padding: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
                           {emp.first_name} {emp.last_name}
                         </td>
                         <td style={{ padding: '0.75rem', color: 'var(--text-muted)' }}>
@@ -485,11 +485,11 @@ export default function CreatePayrunPage() {
                         </td>
                         <td style={{ padding: '0.75rem' }}>
                           {emp.has_applicable_contract ? (
-                            <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#4ADE80', border: '1px solid rgba(34, 197, 94, 0.3)', fontSize: '0.75rem' }}>
+                            <span className="badge" style={{ background: 'var(--green-bg)', color: 'var(--green)', border: '1px solid var(--green-border)', fontSize: '0.75rem' }}>
                               <CheckCircle size={10} style={{ marginRight: '3px' }} /> {emp.contract_name || 'Active Contract'}
                             </span>
                           ) : (
-                            <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#F87171', border: '1px solid rgba(239, 68, 68, 0.3)', fontSize: '0.75rem' }}>
+                            <span className="badge" style={{ background: 'var(--red-bg)', color: 'var(--red)', border: '1px solid var(--red-border)', fontSize: '0.75rem' }}>
                               <ShieldAlert size={10} style={{ marginRight: '3px' }} /> No Applicable Contract
                             </span>
                           )}

@@ -146,7 +146,7 @@ export default function EmployeeHubPage() {
 
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#FFF' }}>
+                  <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>
                     {employee.first_name} {employee.last_name}
                   </h1>
                   <span className={`badge badge-${employee.status}`}>
@@ -180,16 +180,16 @@ export default function EmployeeHubPage() {
               </Link>
 
               <Link href={`/time-off/allocations?employee_id=${employee.id}`} className="btn-secondary" style={{ padding: '0.6rem 0.9rem', gap: '0.5rem' }}>
-                <PieChart size={16} color="#A78BFA" />
+                <PieChart size={16} color="var(--purple)" />
                 <span>Allocations</span>
-                <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.2)', color: '#C084FC', fontSize: '0.7rem' }}>{stats.allocations_count}</span>
+                <span className="badge" style={{ background: 'var(--purple-bg)', color: 'var(--purple)', border: '1px solid var(--purple-border)', fontSize: '0.7rem' }}>{stats.allocations_count}</span>
               </Link>
             </div>
           </div>
         </div>
 
         {successMsg && (
-          <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34D399', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+          <div style={{ background: 'var(--green-bg)', border: '1px solid var(--green-border)', color: 'var(--green)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
             {successMsg}
           </div>
         )}
@@ -198,7 +198,7 @@ export default function EmployeeHubPage() {
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           {/* Section 1: Personal Information */}
           <div className="glass-card" style={{ padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FFF', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <User size={18} color="#3B82F6" /> Personal Details
             </h3>
 
@@ -244,7 +244,7 @@ export default function EmployeeHubPage() {
 
           {/* Section 2: Employment & Work Assignment */}
           <div className="glass-card" style={{ padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FFF', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Building size={18} color="#10B981" /> Employment & Organizational Structure
             </h3>
 
@@ -295,7 +295,7 @@ export default function EmployeeHubPage() {
 
           {/* Section 3: Banking & Payroll Information */}
           <div className="glass-card" style={{ padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FFF', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <CreditCard size={18} color="#F59E0B" /> Banking & Disbursal Information
             </h3>
 

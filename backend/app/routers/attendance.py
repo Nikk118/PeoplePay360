@@ -1,5 +1,6 @@
 from typing import List, Optional
 from datetime import datetime, date, time, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, func
@@ -7,18 +8,26 @@ from sqlalchemy import or_, and_, func
 from app.database import get_db
 from app.models import models
 from app.schemas.schemas import (
-    AttendanceCreate, AttendanceUpdate, AttendanceResponse, AttendanceSummaryResponse
+    AttendanceCreate,
+    AttendanceUpdate,
+    AttendanceResponse,
+    AttendanceSummaryResponse
 )
 from app.auth.rbac import get_current_user, require_roles, TokenData
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
 
+
+def now_india():
+    return datetime.utcnow() + timedelta(hours=5, minutes=30)
+
+
 def compute_worked_hours(check_in: datetime, check_out: Optional[datetime]) -> float:
     if not check_out or check_out <= check_in:
         return 0.0
+
     diff = check_out - check_in
     return round(diff.total_seconds() / 3600.0, 2)
-
 def derive_status(check_in: datetime, check_out: Optional[datetime], employee: models.Employee) -> str:
     # If check_in time is after 09:15 AM local, flag late (or customize per schedule if present)
     check_in_time = check_in.time()
@@ -118,7 +127,7 @@ def check_in(
         raise HTTPException(status_code=400, detail="You are already checked in. Please check out first.")
         
     emp = db.query(models.Employee).filter(models.Employee.id == current_user.employee_id).first()
-    now_time = datetime.utcnow()
+    now_time = now_india()
     att_status = derive_status(now_time, None, emp)
     
     att = models.Attendance(
@@ -144,7 +153,7 @@ def check_out(
     if not att:
         raise HTTPException(status_code=404, detail="Attendance record not found")
         
-    now_time = datetime.utcnow()
+    now_time = now_india()
     att.check_out = now_time
     att.worked_hours = compute_worked_hours(att.check_in, now_time)
     att.status = derive_status(att.check_in, now_time, att.employee)

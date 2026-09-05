@@ -216,7 +216,7 @@ export default function SalaryStructureDetailPage() {
   const canManage = hasRole(['admin', 'hr_manager', 'hr_payroll_manager']);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-dark)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
       <Navbar />
 
       <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1.5rem' }}>
@@ -228,7 +228,7 @@ export default function SalaryStructureDetailPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
-              color: '#60A5FA',
+              color: 'var(--primary)',
               fontSize: '0.875rem',
               fontWeight: 500,
               textDecoration: 'none',
@@ -242,14 +242,14 @@ export default function SalaryStructureDetailPage() {
           {loading ? (
             <div style={{ padding: '2rem 0', color: 'var(--text-muted)' }}>Loading structure details...</div>
           ) : error || !structure ? (
-            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1rem', borderRadius: 'var(--radius-lg)', color: '#F87171' }}>
+            <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red-border)', padding: '1rem', borderRadius: 'var(--radius-lg)', color: 'var(--red)' }}>
               {error || 'Salary structure not found'}
             </div>
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.4rem' }}>
-                  <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#FFF', letterSpacing: '-0.02em' }}>
+                  <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
                     {structure.name}
                   </h1>
                   <span className={`badge ${structure.active ? 'badge-active' : 'badge-inactive'}`}>
@@ -285,46 +285,46 @@ export default function SalaryStructureDetailPage() {
               marginBottom: '2rem'
             }}>
               <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ padding: '0.75rem', background: 'rgba(59, 130, 246, 0.15)', borderRadius: 'var(--radius-md)', color: '#60A5FA' }}>
+                <div style={{ padding: '0.75rem', background: 'var(--blue-bg)', borderRadius: 'var(--radius-md)', color: 'var(--blue)' }}>
                   <Sliders size={22} />
                 </div>
                 <div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Rules</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFF' }}>{structure.rule_count}</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-main)' }}>{structure.rule_count}</div>
                 </div>
               </div>
 
               <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ padding: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: 'var(--radius-md)', color: '#34D399' }}>
+                <div style={{ padding: '0.75rem', background: 'var(--green-bg)', borderRadius: 'var(--radius-md)', color: 'var(--green)' }}>
                   <DollarSign size={22} />
                 </div>
                 <div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Fixed Rules</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFF' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     {structure.rules.filter(r => r.computation_type === 'fixed').length}
                   </div>
                 </div>
               </div>
 
               <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ padding: '0.75rem', background: 'rgba(245, 158, 11, 0.15)', borderRadius: 'var(--radius-md)', color: '#FBBF24' }}>
+                <div style={{ padding: '0.75rem', background: 'var(--yellow-bg)', borderRadius: 'var(--radius-md)', color: 'var(--yellow)' }}>
                   <Percent size={22} />
                 </div>
                 <div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Percentage Rules</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFF' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     {structure.rules.filter(r => r.computation_type === 'percentage').length}
                   </div>
                 </div>
               </div>
 
               <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ padding: '0.75rem', background: 'rgba(139, 92, 246, 0.15)', borderRadius: 'var(--radius-md)', color: '#A78BFA' }}>
+                <div style={{ padding: '0.75rem', background: 'var(--purple-bg)', borderRadius: 'var(--radius-md)', color: 'var(--purple)' }}>
                   <Calculator size={22} />
                 </div>
                 <div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Formula Rules</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFF' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     {structure.rules.filter(r => r.computation_type === 'formula').length}
                   </div>
                 </div>
@@ -333,8 +333,8 @@ export default function SalaryStructureDetailPage() {
 
             {/* Sequence Banner Note */}
             <div style={{
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: '1px solid rgba(59, 130, 246, 0.25)',
+              background: 'rgba(37, 99, 235, 0.08)',
+              border: '1px solid rgba(37, 99, 235, 0.25)',
               borderRadius: 'var(--radius-lg)',
               padding: '1rem 1.25rem',
               marginBottom: '1.5rem',
@@ -342,9 +342,9 @@ export default function SalaryStructureDetailPage() {
               alignItems: 'center',
               gap: '0.85rem'
             }}>
-              <Info size={22} color="#60A5FA" style={{ flexShrink: 0 }} />
-              <div style={{ fontSize: '0.875rem', color: '#93C5FD', lineHeight: 1.5 }}>
-                <strong>Execution Order Matters:</strong> Payroll calculation processes rules strictly in order of <strong>Sequence (ascending)</strong>. Later rules can safely reference codes computed by earlier rules in formulas and percentage calculations.
+              <Info size={22} color="var(--primary)" style={{ flexShrink: 0 }} />
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-main)', lineHeight: 1.5 }}>
+                <strong style={{ color: 'var(--primary)' }}>Execution Order Matters:</strong> Payroll calculation processes rules strictly in order of <strong>Sequence (ascending)</strong>. Later rules can safely reference codes computed by earlier rules in formulas and percentage calculations.
               </div>
             </div>
 
@@ -357,7 +357,7 @@ export default function SalaryStructureDetailPage() {
                 alignItems: 'center',
                 justifyContent: 'space-between'
               }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FFF', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   Salary Rules Sequence
                 </h3>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -373,7 +373,7 @@ export default function SalaryStructureDetailPage() {
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
                     <thead>
-                      <tr style={{ background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
+                      <tr style={{ background: 'var(--bg-page)', borderBottom: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
                         <th style={{ padding: '0.85rem 1.25rem', width: '90px' }}>Seq #</th>
                         <th style={{ padding: '0.85rem 1rem', width: '110px' }}>Code</th>
                         <th style={{ padding: '0.85rem 1rem' }}>Rule Name</th>
@@ -392,10 +392,8 @@ export default function SalaryStructureDetailPage() {
                           style={{
                             borderBottom: '1px solid var(--border-glass)',
                             transition: 'background 0.15s ease',
-                            background: rule.active ? 'transparent' : 'rgba(0, 0, 0, 0.2)'
+                            background: rule.active ? 'transparent' : 'rgba(239, 68, 68, 0.03)'
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = rule.active ? 'transparent' : 'rgba(0, 0, 0, 0.2)'}
                         >
                           {/* Sequence Badge */}
                           <td style={{ padding: '0.85rem 1.25rem' }}>
@@ -406,9 +404,9 @@ export default function SalaryStructureDetailPage() {
                               width: '2.25rem',
                               height: '2.25rem',
                               borderRadius: '0.5rem',
-                              background: 'rgba(59, 130, 246, 0.12)',
-                              border: '1px solid rgba(59, 130, 246, 0.3)',
-                              color: '#60A5FA',
+                              background: 'var(--blue-bg)',
+                              border: '1px solid var(--blue-border)',
+                              color: 'var(--blue)',
                               fontWeight: 700,
                               fontSize: '0.85rem'
                             }}>
@@ -422,18 +420,18 @@ export default function SalaryStructureDetailPage() {
                               fontFamily: 'monospace',
                               fontWeight: 700,
                               fontSize: '0.85rem',
-                              color: '#60A5FA',
-                              background: 'rgba(59, 130, 246, 0.1)',
+                              color: 'var(--primary)',
+                              background: 'rgba(37, 99, 235, 0.08)',
                               padding: '0.2rem 0.5rem',
                               borderRadius: '0.25rem',
-                              border: '1px solid rgba(59, 130, 246, 0.2)'
+                              border: '1px solid rgba(37, 99, 235, 0.2)'
                             }}>
                               {rule.code}
                             </span>
                           </td>
 
                           {/* Name */}
-                          <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: '#FFF' }}>
+                          <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: 'var(--text-main)' }}>
                             {rule.name}
                           </td>
 
@@ -474,22 +472,22 @@ export default function SalaryStructureDetailPage() {
                           {/* Specification */}
                           <td style={{ padding: '0.85rem 1rem' }}>
                             {rule.computation_type === 'fixed' && (
-                              <span style={{ color: '#34D399', fontWeight: 600 }}>
+                              <span style={{ color: 'var(--green)', fontWeight: 600 }}>
                                 ₹{rule.fixed_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                               </span>
                             )}
                             {rule.computation_type === 'percentage' && (
-                              <span style={{ color: '#FBBF24', fontWeight: 600 }}>
-                                {rule.percentage}% of <code style={{ background: 'rgba(255, 255, 255, 0.08)', padding: '0.15rem 0.35rem', borderRadius: '0.2rem', color: '#FFF' }}>{rule.percentage_base || 'BASIC'}</code>
+                              <span style={{ color: 'var(--yellow)', fontWeight: 600 }}>
+                                {rule.percentage}% of <code style={{ background: 'var(--bg-page)', padding: '0.15rem 0.35rem', borderRadius: '0.2rem', color: 'var(--text-main)', border: '1px solid var(--border-glass)' }}>{rule.percentage_base || 'BASIC'}</code>
                               </span>
                             )}
                             {rule.computation_type === 'formula' && (
                               <code style={{
-                                background: 'rgba(0, 0, 0, 0.4)',
+                                background: 'var(--bg-page)',
                                 border: '1px solid var(--border-glass)',
                                 padding: '0.25rem 0.5rem',
                                 borderRadius: '0.35rem',
-                                color: '#A78BFA',
+                                color: 'var(--purple)',
                                 fontSize: '0.8rem',
                                 fontFamily: 'monospace'
                               }}>
@@ -501,7 +499,7 @@ export default function SalaryStructureDetailPage() {
                           {/* Payslip Visibility */}
                           <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
                             {rule.appears_on_payslip ? (
-                              <span title="Visible on Payslip"><Eye size={16} color="#34D399" style={{ margin: '0 auto' }} /></span>
+                              <span title="Visible on Payslip"><Eye size={16} color="var(--green)" style={{ margin: '0 auto' }} /></span>
                             ) : (
                               <span title="Hidden from Payslip"><EyeOff size={16} color="var(--text-dim)" style={{ margin: '0 auto' }} /></span>
                             )}
@@ -566,18 +564,18 @@ export default function SalaryStructureDetailPage() {
           overflowY: 'auto'
         }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '600px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#FFF', marginBottom: '1.25rem' }}>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem' }}>
               {editingRule ? `Edit Salary Rule (${editingRule.code})` : 'Add New Salary Rule'}
             </h2>
 
             {modalError && (
               <div style={{
-                background: 'rgba(239, 68, 68, 0.15)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                background: 'var(--red-bg)',
+                border: '1px solid var(--red-border)',
                 borderRadius: 'var(--radius-md)',
                 padding: '0.75rem 1rem',
                 marginBottom: '1.25rem',
-                color: '#F87171',
+                color: 'var(--red)',
                 fontSize: '0.85rem'
               }}>
                 {modalError}
@@ -588,7 +586,7 @@ export default function SalaryStructureDetailPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                 <div>
                   <label className="form-label" style={{ display: 'block', marginBottom: '0.4rem' }}>
-                    Rule Name <span style={{ color: '#EF4444' }}>*</span>
+                    Rule Name <span style={{ color: 'var(--red)' }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -603,7 +601,7 @@ export default function SalaryStructureDetailPage() {
 
                 <div>
                   <label className="form-label" style={{ display: 'block', marginBottom: '0.4rem' }}>
-                    Rule Code <span style={{ color: '#EF4444' }}>*</span>
+                    Rule Code <span style={{ color: 'var(--red)' }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -638,7 +636,7 @@ export default function SalaryStructureDetailPage() {
 
                 <div>
                   <label className="form-label" style={{ display: 'block', marginBottom: '0.4rem' }}>
-                    Sequence # <span style={{ color: '#EF4444' }}>*</span>
+                    Sequence # <span style={{ color: 'var(--red)' }}>*</span>
                   </label>
                   <input
                     type="number"
@@ -670,7 +668,7 @@ export default function SalaryStructureDetailPage() {
 
               {/* Dynamic Inputs Based on Computation Type */}
               <div style={{
-                background: 'rgba(255, 255, 255, 0.03)',
+                background: 'var(--bg-page)',
                 border: '1px solid var(--border-glass)',
                 borderRadius: 'var(--radius-lg)',
                 padding: '1.25rem',
@@ -755,9 +753,9 @@ export default function SalaryStructureDetailPage() {
                             type="button"
                             onClick={() => setFormula(prev => prev ? `${prev} ${item}` : item)}
                             style={{
-                              background: 'rgba(59, 130, 246, 0.15)',
-                              border: '1px solid rgba(59, 130, 246, 0.3)',
-                              color: '#60A5FA',
+                              background: 'var(--blue-bg)',
+                              border: '1px solid var(--blue-border)',
+                              color: 'var(--blue)',
                               fontSize: '0.75rem',
                               fontFamily: 'monospace',
                               padding: '0.15rem 0.45rem',
@@ -782,9 +780,9 @@ export default function SalaryStructureDetailPage() {
                     id="rule-active"
                     checked={ruleActive}
                     onChange={(e) => setRuleActive(e.target.checked)}
-                    style={{ width: '1.1rem', height: '1.1rem', accentColor: '#3B82F6', cursor: 'pointer' }}
+                    style={{ width: '1.1rem', height: '1.1rem', accentColor: 'var(--primary)', cursor: 'pointer' }}
                   />
-                  <label htmlFor="rule-active" style={{ color: '#FFF', fontSize: '0.875rem', cursor: 'pointer' }}>
+                  <label htmlFor="rule-active" style={{ color: 'var(--text-main)', fontSize: '0.875rem', cursor: 'pointer' }}>
                     Active Rule
                   </label>
                 </div>
@@ -795,9 +793,9 @@ export default function SalaryStructureDetailPage() {
                     id="rule-payslip"
                     checked={appearsOnPayslip}
                     onChange={(e) => setAppearsOnPayslip(e.target.checked)}
-                    style={{ width: '1.1rem', height: '1.1rem', accentColor: '#3B82F6', cursor: 'pointer' }}
+                    style={{ width: '1.1rem', height: '1.1rem', accentColor: 'var(--primary)', cursor: 'pointer' }}
                   />
-                  <label htmlFor="rule-payslip" style={{ color: '#FFF', fontSize: '0.875rem', cursor: 'pointer' }}>
+                  <label htmlFor="rule-payslip" style={{ color: 'var(--text-main)', fontSize: '0.875rem', cursor: 'pointer' }}>
                     Appears on Payslip
                   </label>
                 </div>
@@ -842,13 +840,13 @@ export default function SalaryStructureDetailPage() {
           padding: '1rem'
         }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '450px', padding: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', color: '#EF4444' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', color: 'var(--red)' }}>
               <AlertCircle size={28} />
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFF' }}>Delete Salary Rule</h3>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)' }}>Delete Salary Rule</h3>
             </div>
 
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '1.5rem' }}>
-              Are you sure you want to delete rule <strong style={{ color: '#FFF' }}>{deletingRule.name} ({deletingRule.code})</strong>?
+              Are you sure you want to delete rule <strong style={{ color: 'var(--text-main)' }}>{deletingRule.name} ({deletingRule.code})</strong>?
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>

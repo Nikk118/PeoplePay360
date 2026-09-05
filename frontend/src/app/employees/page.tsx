@@ -102,11 +102,10 @@ export default function EmployeesPage() {
   };
 
   const activeEmployees = employees.filter(e => e.status === 'active');
-  const inactiveEmployees = employees.filter(e => e.status === 'inactive');
-  const archivedEmployees = employees.filter(e => e.status === 'archived');
+ 
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
       <Navbar />
 
       <main style={{ maxWidth: '1280px', margin: '2rem auto', padding: '0 1.5rem' }}>
@@ -120,7 +119,7 @@ export default function EmployeesPage() {
           gap: '1rem'
         }}>
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFF' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
               Employee Directory
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
@@ -131,8 +130,8 @@ export default function EmployeesPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             {/* View Switcher */}
             <div style={{
-              background: 'rgba(17, 24, 39, 0.8)',
-              border: '1px solid var(--border-glass)',
+              background: '#E2E8F0',
+              border: '1px solid var(--border)',
               borderRadius: 'var(--radius-md)',
               padding: '0.2rem',
               display: 'flex',
@@ -247,7 +246,7 @@ export default function EmployeesPage() {
                   employees.map((emp) => (
                     <tr key={emp.id}>
                       <td>
-                        <Link href={`/employees/${emp.id}`} style={{ textDecoration: 'none', color: '#FFF', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        <Link href={`/employees/${emp.id}`} style={{ textDecoration: 'none', color: 'var(--text-main)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                           <div style={{
                             width: '2rem',
                             height: '2rem',
@@ -271,7 +270,7 @@ export default function EmployeesPage() {
                       <td>{emp.department_name || '—'}</td>
                       <td>{emp.job_title || '—'}</td>
                       <td>
-                        <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.06)', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                        <span className="badge" style={{ background: 'var(--primary-light)', color: 'var(--primary)', textTransform: 'capitalize' }}>
                           {emp.employee_type.replace('_', ' ')}
                         </span>
                       </td>
@@ -295,9 +294,9 @@ export default function EmployeesPage() {
           /* Kanban View */
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
             {/* Active Column */}
-            <div style={{ background: 'rgba(17, 24, 39, 0.5)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-glass)' }}>
+            <div style={{ background: '#F1F5F9', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Active ({activeEmployees.length})
                 </h3>
               </div>
@@ -310,7 +309,7 @@ export default function EmployeesPage() {
                           {emp.first_name[0]}{emp.last_name[0]}
                         </div>
                         <div>
-                          <div style={{ fontWeight: 700, color: '#FFF', fontSize: '0.95rem' }}>{emp.first_name} {emp.last_name}</div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.95rem' }}>{emp.first_name} {emp.last_name}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{emp.job_title || 'No Title'}</div>
                         </div>
                       </div>
@@ -323,45 +322,7 @@ export default function EmployeesPage() {
               </div>
             </div>
 
-            {/* Inactive Column */}
-            <div style={{ background: 'rgba(17, 24, 39, 0.5)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-glass)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FBBF24', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Inactive ({inactiveEmployees.length})
-                </h3>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {inactiveEmployees.map(emp => (
-                  <Link key={emp.id} href={`/employees/${emp.id}`} style={{ textDecoration: 'none' }}>
-                    <div className="glass-card" style={{ padding: '1rem' }}>
-                      <div style={{ fontWeight: 700, color: '#FFF' }}>{emp.first_name} {emp.last_name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{emp.job_title}</div>
-                    </div>
-                  </Link>
-                ))}
-                {inactiveEmployees.length === 0 && <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>No inactive employees</div>}
-              </div>
-            </div>
-
-            {/* Archived Column */}
-            <div style={{ background: 'rgba(17, 24, 39, 0.5)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-glass)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#F87171', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Archived ({archivedEmployees.length})
-                </h3>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {archivedEmployees.map(emp => (
-                  <Link key={emp.id} href={`/employees/${emp.id}`} style={{ textDecoration: 'none' }}>
-                    <div className="glass-card" style={{ padding: '1rem' }}>
-                      <div style={{ fontWeight: 700, color: '#FFF' }}>{emp.first_name} {emp.last_name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{emp.job_title}</div>
-                    </div>
-                  </Link>
-                ))}
-                {archivedEmployees.length === 0 && <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>No archived employees</div>}
-              </div>
-            </div>
+           
           </div>
         )}
 
@@ -379,7 +340,7 @@ export default function EmployeesPage() {
             padding: '1.5rem'
           }}>
             <div className="glass-card" style={{ width: '100%', maxWidth: '550px', padding: '2rem' }}>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#FFF', marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem' }}>
                 Add New Employee Record
               </h2>
 

@@ -4,6 +4,8 @@
   /* Core palette */
   --white: #FFFFFF;
   --bg-page: #F5F6FA;
+  --bg-main: #F5F6FA;
+  --bg-dark: #F5F6FA;
   --bg-card: #FFFFFF;
   --bg-card-hover: #F8F9FC;
 
@@ -18,12 +20,13 @@
 
   /* Borders */
   --border: #E2E6ED;
+  --border-glass: #E2E6ED;
   --border-focus: #1E3A5F;
 
-  /* Text */
-  --text-main: #1A1D23;
-  --text-muted: #6B7280;
-  --text-dim: #9CA3AF;
+  /* Text — high contrast for WCAG AA compliance on light backgrounds */
+  --text-main: #0F172A;
+  --text-muted: #475569;
+  --text-dim: #64748B;
 
   /* Status colors */
   --green: #16A34A;
@@ -48,11 +51,13 @@
 
   /* Font */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Radius */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
+  --radius-full: 9999px;
 
   /* Shadow */
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
@@ -73,12 +78,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-main);
+}
+
 /* ── Card ── */
 .glass-card, .glass-panel {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+  color: var(--text-main);
 }
 
 /* ── Buttons ── */
@@ -193,15 +203,15 @@ body {
 }
 
 .custom-table th {
-  background: var(--bg-page);
+  background: #F8FAFC;
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 700;
   padding: 0.75rem 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
 }
 
 .custom-table td {
@@ -214,11 +224,19 @@ body {
 .custom-table tr:last-child td { border-bottom: none; }
 
 .custom-table tbody tr:hover td {
-  background: var(--bg-page);
+  background: #F8FAFC;
 }
 
 /* ── Form inputs ── */
-.form-input, .form-select {
+.form-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.35rem;
+}
+
+.form-input, .form-select, .form-control {
   width: 100%;
   background: var(--white);
   border: 1px solid var(--border);
@@ -231,9 +249,25 @@ body {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.form-input:focus, .form-select:focus {
+.form-input::placeholder, .form-control::placeholder {
+  color: var(--text-dim);
+  opacity: 1;
+}
+
+.form-select option {
+  background: #FFFFFF;
+  color: var(--text-main);
+}
+
+.form-input:focus, .form-select:focus, .form-control:focus {
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+}
+
+.form-input:disabled, .form-select:disabled, .form-control:disabled {
+  background: #F1F5F9;
+  color: var(--text-muted);
+  cursor: not-allowed;
 }
 
 /* ── Scrollbar ── */
@@ -244,3 +278,16 @@ body {
 
 /* ── bg-dark alias used in some pages ── */
 .bg-dark { background-color: var(--bg-page) !important; }
+
+/* ── Modal overlay helper ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1.5rem;
+}

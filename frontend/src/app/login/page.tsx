@@ -66,8 +66,8 @@ export default function LoginPage() {
           }}>
             <Zap size={28} color="#FFF" />
           </div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.025em', color: '#FFF' }}>
-            PeoplePay<span style={{ color: '#3B82F6' }}>360</span>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--text-main)' }}>
+            PeoplePay<span style={{ color: 'var(--primary)' }}>360</span>
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.35rem' }}>
             Integrated HR & Payroll Operations Platform
@@ -76,9 +76,9 @@ export default function LoginPage() {
 
         {error && (
           <div style={{
-            background: 'rgba(244, 63, 94, 0.15)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
-            color: '#F87171',
+            background: 'var(--red-bg)',
+            border: '1px solid var(--red-border)',
+            color: 'var(--red)',
             padding: '0.75rem 1rem',
             borderRadius: 'var(--radius-md)',
             fontSize: '0.85rem',
@@ -90,7 +90,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
               Email Address
             </label>
             <div style={{ position: 'relative' }}>
@@ -108,7 +108,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
               Password
             </label>
             <div style={{ position: 'relative' }}>
@@ -137,7 +137,7 @@ export default function LoginPage() {
 
         <div style={{ margin: '1.75rem 0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ flex: 1, height: '1px', background: 'var(--border-glass)' }}></div>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600 }}>Quick Demo Logins</span>
+          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Quick Demo Logins</span>
           <div style={{ flex: 1, height: '1px', background: 'var(--border-glass)' }}></div>
         </div>
 

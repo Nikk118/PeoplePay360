@@ -189,14 +189,14 @@ function AttendanceContent() {
   const halfDayCount = attendance.filter(r => r.status === 'half_day').length;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
       <Navbar />
 
       <main style={{ maxWidth: '1280px', margin: '2rem auto', padding: '0 1.5rem' }}>
         {/* Header & Quick Action */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1.25rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFF' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
               Attendance Tracking & Operations
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
@@ -210,11 +210,11 @@ function AttendanceContent() {
               <div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>ATTENDANCE QUICK ACTION</div>
                 {todayRecord && !todayRecord.check_out ? (
-                  <div style={{ fontSize: '0.85rem', color: '#34D399', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--green)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                     <CheckCircle size={14} /> Checked in at {new Date(todayRecord.check_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 ) : todayRecord && todayRecord.check_out ? (
-                  <div style={{ fontSize: '0.85rem', color: '#60A5FA', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
                     Completed: {todayRecord.worked_hours} hrs today
                   </div>
                 ) : (
@@ -241,22 +241,22 @@ function AttendanceContent() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginBottom: '1.75rem' }}>
           <div className="glass-card" style={{ padding: '1.25rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Records</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#FFF', marginTop: '0.25rem' }}>{attendance.length}</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.25rem' }}>{attendance.length}</div>
           </div>
 
           <div className="glass-card" style={{ padding: '1.25rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Worked Hours</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#34D399', marginTop: '0.25rem', fontFamily: 'var(--font-mono)' }}>{totalWorkedHours.toFixed(1)} hrs</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--green)', marginTop: '0.25rem', fontFamily: 'var(--font-mono)' }}>{totalWorkedHours.toFixed(1)} hrs</div>
           </div>
 
           <div className="glass-card" style={{ padding: '1.25rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>On-Time Present</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#60A5FA', marginTop: '0.25rem' }}>{presentCount}</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--blue)', marginTop: '0.25rem' }}>{presentCount}</div>
           </div>
 
           <div className="glass-card" style={{ padding: '1.25rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Late / Half-Day Exceptions</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#FBBF24', marginTop: '0.25rem' }}>{lateCount + halfDayCount}</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--amber)', marginTop: '0.25rem' }}>{lateCount + halfDayCount}</div>
           </div>
         </div>
 
@@ -318,20 +318,20 @@ function AttendanceContent() {
                   const checkInDate = new Date(rec.check_in);
                   return (
                     <tr key={rec.id}>
-                      <td style={{ fontWeight: 600, color: '#FFF' }}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
                         {checkInDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600, color: '#FFF' }}>{rec.employee_name || '—'}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{rec.employee_name || '—'}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{rec.department_name}</div>
                       </td>
-                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#60A5FA' }}>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--primary)' }}>
                         {checkInDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </td>
-                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: rec.check_out ? '#34D399' : 'var(--text-dim)' }}>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: rec.check_out ? 'var(--green)' : 'var(--text-dim)' }}>
                         {rec.check_out ? new Date(rec.check_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Active...'}
                       </td>
-                      <td style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#FFF' }}>
+                      <td style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-main)' }}>
                         {rec.worked_hours ? `${rec.worked_hours} hrs` : '0.0 hrs'}
                       </td>
                       <td>
@@ -341,11 +341,11 @@ function AttendanceContent() {
                       </td>
                       <td>
                         {rec.is_manual_edit ? (
-                          <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#FBBF24', fontSize: '0.7rem' }}>
+                          <span className="badge" style={{ background: 'var(--amber-bg)', color: 'var(--amber)', border: '1px solid var(--amber-border)', fontSize: '0.7rem' }}>
                             Manual Correction
                           </span>
                         ) : (
-                          <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-dim)', fontSize: '0.7rem' }}>
+                          <span className="badge" style={{ background: '#F1F5F9', color: 'var(--text-muted)', border: '1px solid var(--border)', fontSize: '0.7rem' }}>
                             System Check-In
                           </span>
                         )}
@@ -369,7 +369,7 @@ function AttendanceContent() {
         {showModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1.5rem' }}>
             <div className="glass-card" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#FFF', marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem' }}>
                 {editRecord ? 'Correct Attendance Entry' : 'Create Manual Attendance'}
               </h2>
 

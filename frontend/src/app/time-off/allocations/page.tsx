@@ -128,13 +128,13 @@ function AllocationsContent() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
       <Navbar />
 
       <main style={{ maxWidth: '1280px', margin: '2rem auto', padding: '0 1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFF' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
               Time Off Allocations
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
@@ -208,14 +208,14 @@ function AllocationsContent() {
                 allocations.map(a => (
                   <tr key={a.id}>
                     <td>
-                      <div style={{ fontWeight: 600, color: '#FFF' }}>{a.employee_name || '—'}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{a.employee_name || '—'}</div>
                     </td>
                     <td>
                       <span className="badge badge-computed">{a.time_off_type_name}</span>
                     </td>
-                    <td style={{ fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{a.allocated_days} days</td>
+                    <td style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-main)' }}>{a.allocated_days} days</td>
                     <td style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{a.taken_days} days</td>
-                    <td style={{ fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#34D399' }}>{a.remaining_days} days</td>
+                    <td style={{ fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--green)' }}>{a.remaining_days} days</td>
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{a.date_from} to {a.date_to}</td>
                     <td>
                       <span className={`badge badge-${a.status}`}>
@@ -247,7 +247,7 @@ function AllocationsContent() {
         {showModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1.5rem' }}>
             <div className="glass-card" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#FFF', marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem' }}>
                 Grant Leave Allocation
               </h2>
 
