@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.database import SessionLocal
+from app.database import SessionLocal, engine, Base
 from app.models import models
 from app.auth.jwt import create_access_token
 
@@ -31,6 +31,12 @@ def test_payrun_suite():
         print("==================================================")
         print("  TESTING PAYRUN MODULE & WORKFLOW")
         print("==================================================")
+
+        # Reset database tables & seed initial data
+        Base.metadata.drop_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
+        from app.main import seed_initial_data
+        seed_initial_data(db)
 
         # Helper tokens
         admin_user = db.query(models.AppUser).filter(models.AppUser.email == "admin@peoplepay360.com").first()

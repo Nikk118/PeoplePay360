@@ -6,7 +6,7 @@ from pypdf import PdfReader
 import io
 
 from app.main import app
-from app.database import SessionLocal
+from app.database import SessionLocal, engine, Base
 from app.models import models
 from app.auth.jwt import create_access_token
 from app.services.pdf_generator import generate_payslip_pdf
@@ -34,6 +34,12 @@ def test_payslip_pdf_suite():
         print("==================================================")
         print("  TESTING PAYSLIP PDF GENERATION & CONTENT")
         print("==================================================")
+
+        # Reset database tables & seed initial data
+        Base.metadata.drop_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
+        from app.main import seed_initial_data
+        seed_initial_data(db)
 
         # Users and employees
         admin_user = db.query(models.AppUser).filter(models.AppUser.email == "admin@peoplepay360.com").first()

@@ -409,3 +409,87 @@ class PayrunResponse(BaseModel):
     updated_at: datetime
     class Config:
         from_attributes = True
+
+
+# Dashboard & Reports Schemas
+class SelectedPeriodInfo(BaseModel):
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    payrun_name: Optional[str] = None
+
+class DashboardSummaryResponse(BaseModel):
+    total_gross_salary: float = 0.0
+    total_deductions: float = 0.0
+    total_net_salary: float = 0.0
+    total_basic_salary: float = 0.0
+    total_allowances: float = 0.0
+    payslip_count: int = 0
+    employee_count: int = 0
+    total_employees: int = 0
+    selected_period: Optional[SelectedPeriodInfo] = None
+
+class PayslipStatusCounts(BaseModel):
+    draft: int = 0
+    computed: int = 0
+    validated: int = 0
+    paid: int = 0
+    total: int = 0
+
+class SalaryByDepartmentItem(BaseModel):
+    department_id: Optional[str] = None
+    department_name: str
+    total_gross: float = 0.0
+    total_net: float = 0.0
+    employee_count: int = 0
+
+class PayrollTrendItem(BaseModel):
+    payrun_id: Optional[str] = None
+    payrun_name: str
+    period_start: str
+    period_end: str
+    total_gross: float = 0.0
+    total_net: float = 0.0
+    total_deductions: float = 0.0
+    payslip_count: int = 0
+    status: str
+
+class AttendanceSummaryResponse(BaseModel):
+    total_records: int = 0
+    present_records: int = 0
+    absent_records: int = 0
+    half_day_records: int = 0
+    late_records: int = 0
+    total_worked_hours: float = 0.0
+    by_status: dict = {}
+
+class TimeOffTypeSummaryItem(BaseModel):
+    type_name: str
+    code: str
+    allocated: float = 0.0
+    taken: float = 0.0
+
+class TimeOffSummaryResponse(BaseModel):
+    pending_requests: int = 0
+    approved_requests: int = 0
+    refused_requests: int = 0
+    total_allocated_days: float = 0.0
+    used_days: float = 0.0
+    remaining_days: float = 0.0
+    by_type: List[TimeOffTypeSummaryItem] = []
+
+class DashboardWarningItem(BaseModel):
+    category: str
+    message: str
+    employee_id: Optional[str] = None
+    employee_name: Optional[str] = None
+    severity: str = "warning"
+
+class DashboardOverviewResponse(BaseModel):
+    summary: DashboardSummaryResponse
+    payslip_status: PayslipStatusCounts
+    salary_by_department: List[SalaryByDepartmentItem]
+    payroll_trends: List[PayrollTrendItem]
+    attendance: AttendanceSummaryResponse
+    time_off: TimeOffSummaryResponse
+    warnings: List[DashboardWarningItem]
+

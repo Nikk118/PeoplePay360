@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import engine, Base, SessionLocal
 from app.models import models
-from app.routers import auth, departments, employees, schedules, contracts, attendance, time_off, salary_structures, payruns, payslips
+from app.routers import auth, departments, employees, schedules, contracts, attendance, time_off, salary_structures, payruns, payslips, dashboard
 from app.auth.jwt import get_password_hash
 
 app = FastAPI(
@@ -36,6 +36,8 @@ app.include_router(salary_structures.router, prefix=settings.API_V1_STR)
 app.include_router(salary_structures.rules_router, prefix=settings.API_V1_STR)
 app.include_router(payruns.router, prefix=settings.API_V1_STR)
 app.include_router(payslips.router, prefix=settings.API_V1_STR)
+app.include_router(dashboard.router, prefix=settings.API_V1_STR)
+
 
 
 @app.on_event("startup")
