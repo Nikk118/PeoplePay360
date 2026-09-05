@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { 
   FileText, ArrowLeft, RefreshCw, CheckCircle, AlertCircle, 
-  Layers, Users, Calendar, Clock, DollarSign, ExternalLink, ShieldAlert, Check
+  Layers, Users, Calendar, Clock, DollarSign, ExternalLink, ShieldAlert, Check, Download
 } from 'lucide-react';
 
 interface PayslipLine {
@@ -55,6 +55,7 @@ export default function PayslipDetailPage() {
   const payslipId = params.id as string;
   const [payslip, setPayslip] = useState<PayslipDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,6 +74,44 @@ export default function PayslipDetailPage() {
       setError(err.message || 'Failed to load payslip details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!payslipId) return;
+    setDownloadingPdf(true);
+    setError(null);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem("pp360_token") : null;
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const res = await fetch(`${API_BASE}/payslips/${payslipId}/pdf`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+
+      if (!res.ok) {
+        let errDetail = 'Failed to download PDF';
+        try {
+          const errJson = await res.json();
+          errDetail = errJson.detail || errDetail;
+        } catch (_) {}
+        throw new Error(errDetail);
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `payslip_${payslip?.employee_number || 'EMP'}_${payslip?.period_start}_to_${payslip?.period_end}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate PDF');
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -171,6 +210,23 @@ export default function PayslipDetailPage() {
                 ID: {payslip.id}
               </span>
             </div>
+
+            <button
+              onClick={handleDownloadPdf}
+              disabled={downloadingPdf}
+              className="btn btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: downloadingPdf ? 'not-allowed' : 'pointer' }}
+            >
+              {downloadingPdf ? (
+                <>
+                  <RefreshCw className="animate-spin" size={16} /> Generating PDF...
+                </>
+              ) : (
+                <>
+                  <Download size={16} /> Download PDF
+                </>
+              )}
+            </button>
           </div>
 
           {/* Info Columns */}

@@ -1,7 +1,7 @@
 import json
 from typing import List, Optional
 from datetime import date
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 
@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models import models
 from app.schemas.schemas import PayslipResponse, PayslipLineResponse
 from app.auth.rbac import get_current_user, TokenData
+from app.services.pdf_generator import generate_payslip_pdf
 
 router = APIRouter(prefix="/payslips", tags=["Payslips"])
 
@@ -131,3 +132,40 @@ def get_payslip(
             raise HTTPException(status_code=403, detail="Access denied. You can only view your own payslips.")
 
     return build_payslip_response(payslip)
+
+
+@router.get("/{payslip_id}/pdf")
+def get_payslip_pdf(
+    payslip_id: str,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+):
+    """
+    Generates and returns an official PDF document for a stored Payslip.
+    Enforces RBAC: Employees can only generate/view their own payslip PDF.
+    Does NOT recalculate payroll — strictly uses stored Payslip and PayslipLine database data.
+    """
+    payslip = db.query(models.Payslip).filter(models.Payslip.id == payslip_id).first()
+    if not payslip:
+        raise HTTPException(status_code=404, detail="Payslip not found")
+
+    # RBAC Enforcement
+    if not is_management_user(current_user):
+        if payslip.employee_id != current_user.employee_id:
+            raise HTTPException(status_code=403, detail="Access denied. You can only generate/view your own payslip PDF.")
+
+    try:
+        pdf_bytes = generate_payslip_pdf(payslip)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate payslip PDF: {str(e)}")
+
+    emp_code = payslip.employee.employee_number if payslip.employee else "EMP"
+    filename = f"payslip_{emp_code}_{payslip.period_start}_{payslip.period_end}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        }
+    )
