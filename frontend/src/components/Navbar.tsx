@@ -16,228 +16,119 @@ export default function Navbar() {
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
+  const linkStyle = (active: boolean): React.CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.35rem',
+    padding: '0.45rem 0.8rem',
+    borderRadius: '6px',
+    fontSize: '0.85rem',
+    fontWeight: 500,
+    textDecoration: 'none',
+    color: active ? '#1E3A5F' : '#6B7280',
+    background: active ? '#EBF0F7' : 'transparent',
+    borderBottom: active ? '2px solid #1E3A5F' : '2px solid transparent',
+    transition: 'all 0.15s ease',
+  });
+
   return (
     <nav style={{
-      background: 'rgba(17, 24, 39, 0.85)',
-      backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid var(--border-glass)',
+      background: '#FFFFFF',
+      borderBottom: '1px solid #E2E6ED',
       position: 'sticky',
       top: 0,
       zIndex: 50,
-      padding: '0 1.5rem'
+      padding: '0 1.5rem',
     }}>
       <div style={{
         maxWidth: '1280px',
         margin: '0 auto',
-        height: '4rem',
+        height: '3.75rem',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
       }}>
+
         {/* Brand */}
-        <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+        <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <div style={{
-            width: '2.25rem',
-            height: '2.25rem',
-            borderRadius: '0.6rem',
-            background: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)',
+            width: '2rem',
+            height: '2rem',
+            borderRadius: '6px',
+            background: '#1E3A5F',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.35)'
           }}>
-            <Zap size={18} color="#FFF" />
+            <Zap size={14} color="#FFFFFF" />
           </div>
-          <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFF', letterSpacing: '-0.02em' }}>
-            PeoplePay<span style={{ color: '#3B82F6' }}>360</span>
+          <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1A1D23', letterSpacing: '-0.01em' }}>
+            PeoplePay<span style={{ color: '#1E3A5F' }}>360</span>
           </span>
         </Link>
 
-        {/* Navigation Items */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          <Link
-            href="/employees"
-            className="nav-link"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0.5rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-              color: isActive('/employees') ? '#FFF' : 'var(--text-muted)',
-              background: isActive('/employees') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-              border: isActive('/employees') ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent'
-            }}
-          >
-            <Users size={16} color={isActive('/employees') ? '#60A5FA' : 'var(--text-dim)'} />
-            Employees
+        {/* Navigation */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+          <Link href="/employees" style={linkStyle(isActive('/employees'))}>
+            <Users size={15} /> Employees
           </Link>
 
           {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
-            <Link
-              href="/contracts"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.5rem 0.85rem',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                textDecoration: 'none',
-                color: isActive('/contracts') ? '#FFF' : 'var(--text-muted)',
-                background: isActive('/contracts') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                border: isActive('/contracts') ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent'
-              }}
-            >
-              <FileText size={16} color={isActive('/contracts') ? '#60A5FA' : 'var(--text-dim)'} />
-              Contracts
+            <Link href="/contracts" style={linkStyle(isActive('/contracts'))}>
+              <FileText size={15} /> Contracts
             </Link>
           )}
 
-          <Link
-            href="/attendance"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0.5rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-              color: isActive('/attendance') ? '#FFF' : 'var(--text-muted)',
-              background: isActive('/attendance') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-              border: isActive('/attendance') ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent'
-            }}
-          >
-            <Clock size={16} color={isActive('/attendance') ? '#60A5FA' : 'var(--text-dim)'} />
-            Attendance
+          <Link href="/attendance" style={linkStyle(isActive('/attendance'))}>
+            <Clock size={15} /> Attendance
           </Link>
 
-          <Link
-            href="/time-off/requests"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0.5rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-              color: isActive('/time-off') ? '#FFF' : 'var(--text-muted)',
-              background: isActive('/time-off') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-              border: isActive('/time-off') ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent'
-            }}
-          >
-            <Calendar size={16} color={isActive('/time-off') ? '#60A5FA' : 'var(--text-dim)'} />
-            Time Off
+          <Link href="/time-off/requests" style={linkStyle(isActive('/time-off'))}>
+            <Calendar size={15} /> Time Off
           </Link>
 
           {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
-            <Link
-              href="/payroll/structures"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.5rem 0.85rem',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                textDecoration: 'none',
-                color: isActive('/payroll/structures') ? '#FFF' : 'var(--text-muted)',
-                background: isActive('/payroll/structures') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                border: isActive('/payroll/structures') ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent'
-              }}
-            >
-              <Layers size={16} color={isActive('/payroll/structures') ? '#60A5FA' : 'var(--text-dim)'} />
-              Structures
+            <Link href="/payroll/structures" style={linkStyle(isActive('/payroll/structures'))}>
+              <Layers size={15} /> Structures
             </Link>
           )}
 
           {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
-            <Link
-              href="/payroll/payruns"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.5rem 0.85rem',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                textDecoration: 'none',
-                color: isActive('/payroll/payruns') ? '#FFF' : 'var(--text-muted)',
-                background: isActive('/payroll/payruns') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                border: isActive('/payroll/payruns') ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent'
-              }}
-            >
-              <DollarSign size={16} color={isActive('/payroll/payruns') ? '#60A5FA' : 'var(--text-dim)'} />
-              Payruns
+            <Link href="/payroll/payruns" style={linkStyle(isActive('/payroll/payruns'))}>
+              <DollarSign size={15} /> Payruns
             </Link>
           )}
 
-          <Link
-            href="/payroll/payslips"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0.5rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-              color: isActive('/payroll/payslips') ? '#FFF' : 'var(--text-muted)',
-              background: isActive('/payroll/payslips') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-              border: isActive('/payroll/payslips') ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent'
-            }}
-          >
-            <FileText size={16} color={isActive('/payroll/payslips') ? '#60A5FA' : 'var(--text-dim)'} />
-            Payslips
+          <Link href="/payroll/payslips" style={linkStyle(isActive('/payroll/payslips'))}>
+            <FileText size={15} /> Payslips
           </Link>
 
-          <Link
-            href="/reports/dashboard"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0.5rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-              color: isActive('/reports') || isActive('/dashboard') ? '#FFF' : 'var(--text-muted)',
-              background: isActive('/reports') || isActive('/dashboard') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-              border: isActive('/reports') || isActive('/dashboard') ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent'
-            }}
-          >
-            <BarChart2 size={16} color={isActive('/reports') || isActive('/dashboard') ? '#60A5FA' : 'var(--text-dim)'} />
-            Reports
+          <Link href="/reports/dashboard" style={linkStyle(isActive('/reports') || isActive('/dashboard'))}>
+            <BarChart2 size={15} /> Reports
           </Link>
         </div>
 
-        {/* User Pill & Logout */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        {/* User info + logout */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid var(--border-glass)',
-            padding: '0.35rem 0.75rem',
-            borderRadius: 'var(--radius-full)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
-            fontSize: '0.8rem'
+            fontSize: '0.8rem',
+            color: '#6B7280',
           }}>
-            <Shield size={14} color="#3B82F6" />
-            <span style={{ fontWeight: 600, color: '#FFF' }}>{user.email.split('@')[0]}</span>
-            <span className="badge badge-active" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
+            <Shield size={14} color="#1E3A5F" />
+            <span style={{ fontWeight: 600, color: '#1A1D23' }}>{user.email.split('@')[0]}</span>
+            <span style={{
+              background: '#EBF0F7',
+              color: '#1E3A5F',
+              border: '1px solid #C5D5E8',
+              borderRadius: '4px',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              padding: '0.1rem 0.45rem',
+              letterSpacing: '0.04em',
+            }}>
               {user.roles[0]?.toUpperCase() || 'USER'}
             </span>
           </div>
@@ -247,16 +138,27 @@ export default function Navbar() {
             title="Sign out"
             style={{
               background: 'transparent',
-              border: 'none',
-              color: 'var(--text-dim)',
+              border: '1px solid #E2E6ED',
+              color: '#6B7280',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               padding: '0.4rem',
-              borderRadius: 'var(--radius-md)'
+              borderRadius: '6px',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = '#FEF2F2';
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#FECACA';
+              (e.currentTarget as HTMLButtonElement).style.color = '#DC2626';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#E2E6ED';
+              (e.currentTarget as HTMLButtonElement).style.color = '#6B7280';
             }}
           >
-            <LogOut size={18} />
+            <LogOut size={16} />
           </button>
         </div>
       </div>
