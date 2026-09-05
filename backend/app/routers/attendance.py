@@ -207,7 +207,7 @@ def get_attendance_summary(
 def create_manual_attendance(
     data: AttendanceCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     emp = db.query(models.Employee).filter(models.Employee.id == data.employee_id).first()
     if not emp:
@@ -233,7 +233,7 @@ def update_attendance(
     attendance_id: str,
     data: AttendanceUpdate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     att = db.query(models.Attendance).filter(models.Attendance.id == attendance_id).first()
     if not att:
@@ -259,7 +259,7 @@ def update_attendance(
 def delete_attendance(
     attendance_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     att = db.query(models.Attendance).filter(models.Attendance.id == attendance_id).first()
     if not att:

@@ -135,7 +135,7 @@ def get_contract(
 def create_contract(
     data: ContractCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     emp = db.query(models.Employee).filter(models.Employee.id == data.employee_id).first()
     if not emp:
@@ -152,7 +152,7 @@ def update_contract(
     contract_id: str,
     data: ContractCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     c = db.query(models.Contract).filter(models.Contract.id == contract_id).first()
     if not c:
@@ -169,7 +169,7 @@ def update_contract(
 def delete_contract(
     contract_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     c = db.query(models.Contract).filter(models.Contract.id == contract_id).first()
     if not c:

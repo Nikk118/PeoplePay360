@@ -37,7 +37,7 @@ def list_time_off_types(
 def create_time_off_type(
     data: TimeOffTypeCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     existing = db.query(models.TimeOffType).filter(
         or_(models.TimeOffType.name == data.name, models.TimeOffType.code == data.code)
@@ -102,7 +102,7 @@ def list_allocations(
 def create_allocation(
     data: TimeOffAllocationCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     emp = db.query(models.Employee).filter(models.Employee.id == data.employee_id).first()
     if not emp:
@@ -131,7 +131,7 @@ def create_allocation(
 def approve_allocation(
     allocation_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     alloc = db.query(models.TimeOffAllocation).filter(models.TimeOffAllocation.id == allocation_id).first()
     if not alloc:
@@ -146,7 +146,7 @@ def approve_allocation(
 def refuse_allocation(
     allocation_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     alloc = db.query(models.TimeOffAllocation).filter(models.TimeOffAllocation.id == allocation_id).first()
     if not alloc:
@@ -259,7 +259,7 @@ def create_request(
 def approve_request(
     request_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     req = db.query(models.TimeOffRequest).filter(models.TimeOffRequest.id == request_id).first()
     if not req:
@@ -322,7 +322,7 @@ def approve_request(
 def refuse_request(
     request_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     req = db.query(models.TimeOffRequest).filter(models.TimeOffRequest.id == request_id).first()
     if not req:

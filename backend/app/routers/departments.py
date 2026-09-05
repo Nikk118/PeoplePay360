@@ -19,7 +19,7 @@ def list_departments(
 def create_department(
     name: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     existing = db.query(Department).filter(Department.name == name).first()
     if existing:

@@ -318,7 +318,7 @@ export default function EmployeeHubPage() {
           </div>
 
           {/* Form Actions */}
-          {hasRole(['hr_manager', 'admin']) && (
+          {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.5rem' }}>
               <button type="submit" disabled={saving} className="btn-primary" style={{ padding: '0.75rem 1.75rem' }}>
                 <Save size={18} /> {saving ? 'Saving...' : 'Save Hub Changes'}

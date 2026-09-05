@@ -35,7 +35,7 @@ interface Payslip {
 }
 
 export default function PayslipsListPage() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [payslips, setPayslips] = useState<Payslip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +104,26 @@ export default function PayslipsListPage() {
         );
     }
   };
+
+  if (user && hasRole(['hr_manager']) && !hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager'])) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
+        <Navbar />
+        <main style={{ maxWidth: '800px', margin: '4rem auto', padding: '2rem', textAlign: 'center' }}>
+          <div className="glass-panel" style={{ padding: '3rem 2rem' }}>
+            <AlertCircle size={48} color="var(--red)" style={{ margin: '0 auto 1rem' }} />
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Access Denied</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              HR Managers do not have access to payroll features (Payslips).
+            </p>
+            <Link href="/dashboard" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+              Return to Dashboard
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>

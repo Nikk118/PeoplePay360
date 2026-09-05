@@ -8,7 +8,7 @@ from sqlalchemy import or_, and_
 from app.database import get_db
 from app.models import models
 from app.schemas.schemas import PayslipResponse, PayslipLineResponse
-from app.auth.rbac import get_current_user, TokenData
+from app.auth.rbac import get_current_user, require_roles, TokenData
 from app.services.pdf_generator import generate_payslip_pdf
 
 router = APIRouter(prefix="/payslips", tags=["Payslips"])
@@ -70,8 +70,15 @@ def build_payslip_response(payslip: models.Payslip) -> PayslipResponse:
     )
 
 def is_management_user(user: TokenData) -> bool:
-    mgmt_roles = {"admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"}
+    mgmt_roles = {"admin", "hr_payroll_user", "hr_payroll_manager"}
     return any(r in mgmt_roles for r in user.roles)
+
+def check_not_hr_manager_only(user: TokenData):
+    if "hr_manager" in user.roles and not any(r in user.roles for r in ["admin", "hr_payroll_user", "hr_payroll_manager"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. HR Managers do not have access to payroll features."
+        )
 
 
 @router.get("", response_model=List[PayslipResponse])
@@ -82,13 +89,16 @@ def list_payslips(
     period_start: Optional[date] = Query(None),
     period_end: Optional[date] = Query(None),
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(require_roles(["employee", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     """
     List payslips with optional filtering.
     Employees can only view their own payslips.
-    HR / Payroll / Admin users can view all or filter by employee.
+    HR Payroll / Admin users can view all or filter by employee.
+    HR Managers are denied access.
     """
+    check_not_hr_manager_only(current_user)
+
     query = db.query(models.Payslip)
 
     # RBAC Enforcement: Non-management users can only view their own payslips
@@ -116,12 +126,14 @@ def list_payslips(
 def get_payslip(
     payslip_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(require_roles(["employee", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     """
     Get a single payslip with its salary-rule breakdown.
     Enforces RBAC so employees cannot view other employees' payslips.
     """
+    check_not_hr_manager_only(current_user)
+
     payslip = db.query(models.Payslip).filter(models.Payslip.id == payslip_id).first()
     if not payslip:
         raise HTTPException(status_code=404, detail="Payslip not found")
@@ -138,13 +150,15 @@ def get_payslip(
 def get_payslip_pdf(
     payslip_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(require_roles(["employee", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     """
     Generates and returns an official PDF document for a stored Payslip.
     Enforces RBAC: Employees can only generate/view their own payslip PDF.
     Does NOT recalculate payroll — strictly uses stored Payslip and PayslipLine database data.
     """
+    check_not_hr_manager_only(current_user)
+
     payslip = db.query(models.Payslip).filter(models.Payslip.id == payslip_id).first()
     if not payslip:
         raise HTTPException(status_code=404, detail="Payslip not found")

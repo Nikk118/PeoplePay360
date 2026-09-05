@@ -147,7 +147,7 @@ function AllocationsContent() {
               <Calendar size={16} /> Leave Requests
             </Link>
 
-            {hasRole(['hr_manager', 'admin']) && (
+            {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
               <button onClick={() => {
                 setFormData({
                   employee_id: selectedEmp || (employees.length > 0 ? employees[0].id : ''),
@@ -223,7 +223,7 @@ function AllocationsContent() {
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      {a.status === 'draft' && hasRole(['hr_manager', 'admin']) ? (
+                      {a.status === 'draft' && hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) ? (
                         <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
                           <button onClick={() => handleApprove(a.id)} className="btn-success" style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}>
                             <CheckCircle size={14} /> Approve

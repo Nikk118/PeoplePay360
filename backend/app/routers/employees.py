@@ -131,7 +131,7 @@ def get_employee_stats(
 def create_employee(
     data: EmployeeCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     existing = db.query(models.Employee).filter(models.Employee.employee_number == data.employee_number).first()
     if existing:
@@ -148,7 +148,7 @@ def update_employee(
     employee_id: str,
     data: EmployeeCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "admin"]))
+    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     emp = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
     if not emp:

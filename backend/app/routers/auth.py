@@ -90,12 +90,17 @@ def create_user(
     if existing:
         raise HTTPException(status_code=400, detail="User email already exists")
     
+    if data.employee_id:
+        existing_emp = db.query(AppUser).filter(AppUser.employee_id == data.employee_id).first()
+        if existing_emp:
+            raise HTTPException(status_code=400, detail="An account is already linked to this employee")
+    
     hashed_pwd = get_password_hash(data.password)
     user = AppUser(
         email=data.email,
         password_hash=hashed_pwd,
-        employee_id=data.employee_id,
-        is_active=True
+        employee_id=data.employee_id if data.employee_id else None,
+        is_active=data.is_active if data.is_active is not None else True
     )
     db.add(user)
     db.flush()
@@ -106,6 +111,28 @@ def create_user(
     db.commit()
     db.refresh(user)
     
+    emp_name = f"{user.employee.first_name} {user.employee.last_name}" if user.employee else None
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        employee_id=user.employee_id,
+        employee_name=emp_name,
+        is_active=user.is_active,
+        roles=[r.role for r in user.roles]
+    )
+
+@user_router.patch("/{user_id}/status", response_model=UserResponse)
+def toggle_user_status(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_roles(["admin"]))
+):
+    user = db.query(AppUser).filter(AppUser.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_active = not user.is_active
+    db.commit()
+    db.refresh(user)
     emp_name = f"{user.employee.first_name} {user.employee.last_name}" if user.employee else None
     return UserResponse(
         id=user.id,

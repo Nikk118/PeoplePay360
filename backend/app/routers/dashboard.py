@@ -12,9 +12,20 @@ from app.auth.rbac import get_current_user, TokenData
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard & Reports"])
 
+def is_payroll_user(user: TokenData) -> bool:
+    mgmt_roles = {"admin", "hr_payroll_user", "hr_payroll_manager"}
+    return any(r in mgmt_roles for r in user.roles)
+
 def is_management_user(user: TokenData) -> bool:
     mgmt_roles = {"admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"}
     return any(r in mgmt_roles for r in user.roles)
+
+def check_not_hr_manager_only(user: TokenData):
+    if "hr_manager" in user.roles and not any(r in user.roles for r in ["admin", "hr_payroll_user", "hr_payroll_manager"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. HR Managers do not have access to payroll reports."
+        )
 
 def apply_payslip_filters(
     query,
@@ -25,8 +36,8 @@ def apply_payslip_filters(
     status_filter: Optional[str] = None,
     payrun_id: Optional[str] = None
 ):
-    # RBAC restriction
-    if not is_management_user(current_user):
+    # RBAC restriction: Only payroll management roles can view all payslips
+    if not is_payroll_user(current_user):
         if not current_user.employee_id:
             return query.filter(models.Payslip.id == "none")
         query = query.filter(models.Payslip.employee_id == current_user.employee_id)
@@ -59,7 +70,9 @@ def get_dashboard_summary(
 ):
     """
     Get high-level summary of payroll metrics (Gross, Net, Deductions, Payslips, Employees).
+    HR Managers are blocked from payroll metrics.
     """
+    check_not_hr_manager_only(current_user)
     payslip_query = apply_payslip_filters(
         db.query(models.Payslip),
         current_user,
@@ -132,6 +145,7 @@ def get_payslip_status(
     """
     Get live payslip counts categorized by status (draft, computed, validated, paid).
     """
+    check_not_hr_manager_only(current_user)
     payslip_query = apply_payslip_filters(
         db.query(models.Payslip),
         current_user,
@@ -172,6 +186,7 @@ def get_salary_by_department(
     """
     Aggregate payroll totals (gross & net salary) by department from live database records.
     """
+    check_not_hr_manager_only(current_user)
     payslip_query = apply_payslip_filters(
         db.query(models.Payslip),
         current_user,
@@ -233,6 +248,7 @@ def get_payroll_trends(
     """
     Get payroll trend data across available Payruns and period months.
     """
+    check_not_hr_manager_only(current_user)
     payruns = db.query(models.Payrun).order_by(models.Payrun.period_start.asc()).all()
     if not payruns:
         return []
@@ -495,30 +511,31 @@ def get_dashboard_warnings(
             ))
 
     # 4. Check for payslip calculation warnings in recent payslips
-    payslip_q = db.query(models.Payslip)
-    if not is_management_user(current_user):
-        payslip_q = payslip_q.filter(models.Payslip.employee_id == current_user.employee_id)
-    elif department_id:
-        payslip_q = payslip_q.join(models.Employee, models.Payslip.employee_id == models.Employee.id).filter(
-            models.Employee.department_id == department_id
-        )
+    if is_payroll_user(current_user):
+        payslip_q = db.query(models.Payslip)
+        if not is_management_user(current_user):
+            payslip_q = payslip_q.filter(models.Payslip.employee_id == current_user.employee_id)
+        elif department_id:
+            payslip_q = payslip_q.join(models.Employee, models.Payslip.employee_id == models.Employee.id).filter(
+                models.Employee.department_id == department_id
+            )
 
-    recent_payslips = payslip_q.order_by(models.Payslip.created_at.desc()).limit(20).all()
-    for ps in recent_payslips:
-        if ps.warnings_json:
-            try:
-                msg_list = json.loads(ps.warnings_json)
-                emp_name = f"{ps.employee.first_name} {ps.employee.last_name}" if ps.employee else "Employee"
-                for msg in msg_list:
-                    warnings.append(schemas.DashboardWarningItem(
-                        category="Payroll Issue",
-                        message=f"Payslip for {emp_name}: {msg}",
-                        employee_id=ps.employee_id,
-                        employee_name=emp_name,
-                        severity="warning"
-                    ))
-            except Exception:
-                pass
+        recent_payslips = payslip_q.order_by(models.Payslip.created_at.desc()).limit(20).all()
+        for ps in recent_payslips:
+            if ps.warnings_json:
+                try:
+                    msg_list = json.loads(ps.warnings_json)
+                    emp_name = f"{ps.employee.first_name} {ps.employee.last_name}" if ps.employee else "Employee"
+                    for msg in msg_list:
+                        warnings.append(schemas.DashboardWarningItem(
+                            category="Payroll Issue",
+                            message=f"Payslip for {emp_name}: {msg}",
+                            employee_id=ps.employee_id,
+                            employee_name=emp_name,
+                            severity="warning"
+                        ))
+                except Exception:
+                    pass
 
     return warnings
 
@@ -536,39 +553,62 @@ def get_dashboard_overview(
     """
     Consolidated Dashboard endpoint returning all metrics, summaries, trends, and warnings in a single call.
     """
-    summary = get_dashboard_summary(
-        period_start=period_start,
-        period_end=period_end,
-        department_id=department_id,
-        status_filter=status_filter,
-        payrun_id=payrun_id,
-        db=db,
-        current_user=current_user
-    )
+    if is_payroll_user(current_user):
+        summary = get_dashboard_summary(
+            period_start=period_start,
+            period_end=period_end,
+            department_id=department_id,
+            status_filter=status_filter,
+            payrun_id=payrun_id,
+            db=db,
+            current_user=current_user
+        )
 
-    payslip_status = get_payslip_status(
-        period_start=period_start,
-        period_end=period_end,
-        department_id=department_id,
-        payrun_id=payrun_id,
-        db=db,
-        current_user=current_user
-    )
+        payslip_status = get_payslip_status(
+            period_start=period_start,
+            period_end=period_end,
+            department_id=department_id,
+            payrun_id=payrun_id,
+            db=db,
+            current_user=current_user
+        )
 
-    salary_by_dept = get_salary_by_department(
-        period_start=period_start,
-        period_end=period_end,
-        status_filter=status_filter,
-        payrun_id=payrun_id,
-        db=db,
-        current_user=current_user
-    )
+        salary_by_dept = get_salary_by_department(
+            period_start=period_start,
+            period_end=period_end,
+            status_filter=status_filter,
+            payrun_id=payrun_id,
+            db=db,
+            current_user=current_user
+        )
 
-    payroll_trends = get_payroll_trends(
-        department_id=department_id,
-        db=db,
-        current_user=current_user
-    )
+        payroll_trends = get_payroll_trends(
+            department_id=department_id,
+            db=db,
+            current_user=current_user
+        )
+    else:
+        # Non-payroll users (e.g. HR Manager or regular employee) receive zero/empty payroll metrics
+        emp_query = db.query(models.Employee).filter(models.Employee.status == "active")
+        if department_id and is_management_user(current_user):
+            emp_query = emp_query.filter(models.Employee.department_id == department_id)
+        total_employees = emp_query.count()
+
+        summary = schemas.DashboardSummaryResponse(
+            total_gross_salary=0.0,
+            total_deductions=0.0,
+            total_net_salary=0.0,
+            total_basic_salary=0.0,
+            total_allowances=0.0,
+            payslip_count=0,
+            employee_count=0,
+            total_employees=total_employees
+        )
+        payslip_status = schemas.PayslipStatusCounts(
+            draft=0, computed=0, validated=0, paid=0, total=0
+        )
+        salary_by_dept = []
+        payroll_trends = []
 
     attendance = get_attendance_summary(
         period_start=period_start,

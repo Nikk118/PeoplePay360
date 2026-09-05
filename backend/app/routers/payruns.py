@@ -114,7 +114,7 @@ def list_eligible_employees(
     department_id: Optional[str] = None,
     employee_type: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"]))
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     """
     Returns eligible active employees with contract status for Step 2 of Payrun Creation.
@@ -155,7 +155,7 @@ def list_eligible_employees(
 def list_payruns(
     status_filter: Optional[str] = Query(None, alias="status"),
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     query = db.query(models.Payrun)
     if status_filter:
@@ -169,7 +169,7 @@ def list_payruns(
 def get_payrun(
     payrun_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     payrun = db.query(models.Payrun).filter(models.Payrun.id == payrun_id).first()
     if not payrun:
@@ -181,21 +181,13 @@ def get_payrun(
 def get_payrun_payslips(
     payrun_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     payrun = db.query(models.Payrun).filter(models.Payrun.id == payrun_id).first()
     if not payrun:
         raise HTTPException(status_code=404, detail="Payrun not found")
 
-    mgmt_roles = {"admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"}
-    is_mgmt = any(r in mgmt_roles for r in current_user.roles)
-
     query = db.query(models.Payslip).filter(models.Payslip.payrun_id == payrun_id)
-    if not is_mgmt:
-        if not current_user.employee_id:
-            return []
-        query = query.filter(models.Payslip.employee_id == current_user.employee_id)
-
     payslips = query.all()
     return [build_payslip_response(p) for p in payslips]
 
@@ -204,7 +196,7 @@ def get_payrun_payslips(
 def create_payrun(
     body: PayrunCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"]))
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     # 1. Date range validation
     if body.period_start > body.period_end:
@@ -298,7 +290,7 @@ def create_payrun(
 def compute_payrun(
     payrun_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"]))
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     """
     Computes payroll for ONLY the selected employees in this Payrun using Payroll Engine.
@@ -384,7 +376,7 @@ def compute_payrun(
 def validate_payrun(
     payrun_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"]))
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     """
     Validates a computed payrun.
@@ -414,7 +406,7 @@ def validate_payrun(
 def mark_payrun_paid(
     payrun_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"]))
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     """
     Marks a validated payrun as paid.
@@ -444,7 +436,7 @@ def mark_payrun_paid(
 def delete_payrun(
     payrun_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"]))
+    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
 ):
     """
     Deletes a payrun if it is in 'draft' status.

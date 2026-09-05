@@ -102,6 +102,26 @@ export default function PayrunsListPage() {
     }
   };
 
+  if (user && !hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager'])) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
+        <Navbar />
+        <main style={{ maxWidth: '800px', margin: '4rem auto', padding: '2rem', textAlign: 'center' }}>
+          <div className="glass-panel" style={{ padding: '3rem 2rem' }}>
+            <AlertCircle size={48} color="var(--red)" style={{ margin: '0 auto 1rem' }} />
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Access Denied</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              HR Managers do not have access to payroll features (Payruns).
+            </p>
+            <Link href="/dashboard" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+              Return to Dashboard
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
       <Navbar />
@@ -121,7 +141,7 @@ export default function PayrunsListPage() {
             </p>
           </div>
 
-          {hasRole(['admin', 'hr_manager', 'hr_payroll_user', 'hr_payroll_manager']) && (
+          {hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager']) && (
             <Link
               href="/payroll/payruns/create"
               className="btn btn-primary"
@@ -190,7 +210,7 @@ export default function PayrunsListPage() {
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
               {statusFilter === 'all' ? 'Get started by creating your first two-step payroll run.' : `No payruns currently match the filter '${statusFilter}'.`}
             </p>
-            {hasRole(['admin', 'hr_manager', 'hr_payroll_user', 'hr_payroll_manager']) && (
+            {hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager']) && (
               <Link href="/payroll/payruns/create" className="btn btn-primary" style={{ textDecoration: 'none' }}>
                 <Plus size={16} style={{ marginRight: '0.4rem' }} /> Create Payrun
               </Link>
@@ -257,7 +277,7 @@ export default function PayrunsListPage() {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid var(--border-glass)' }}>
-                  {payrun.status === 'draft' && (
+                  {payrun.status === 'draft' && hasRole(['admin', 'hr_payroll_manager']) && (
                     <button
                       onClick={(e) => handleDeleteDraft(payrun.id, e)}
                       disabled={deletingId === payrun.id}

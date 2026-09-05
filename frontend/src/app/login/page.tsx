@@ -158,6 +158,14 @@ export default function LoginPage() {
             <Briefcase size={14} color="#10B981" /> Payroll Manager
           </button>
 
+        <button
+  onClick={() => handleQuickLogin('hrpayroll@peoplepay360.com')}
+  className="btn-secondary"
+  style={{ fontSize: '0.75rem', padding: '0.55rem', justifyContent: 'flex-start' }}
+>
+  <Briefcase size={14} color="#3B82F6" /> HR Payroll User
+</button>
+
           <button
             onClick={() => handleQuickLogin('employee@peoplepay360.com')}
             className="btn-secondary"

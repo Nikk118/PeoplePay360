@@ -176,7 +176,7 @@ export default function EmployeesPage() {
               </button>
             </div>
 
-            {hasRole(['hr_manager', 'admin']) && (
+            {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
               <button
                 onClick={() => setShowModal(true)}
                 className="btn-primary"
@@ -292,7 +292,7 @@ export default function EmployeesPage() {
           </div>
         ) : (
           /* Kanban View */
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', overflowX: 'auto' }}>
             {/* Active Column */}
             <div style={{ background: '#F1F5F9', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -300,7 +300,8 @@ export default function EmployeesPage() {
                   Active ({activeEmployees.length})
                 </h3>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '0.85rem' }}>
+                
                 {activeEmployees.map(emp => (
                   <Link key={emp.id} href={`/employees/${emp.id}`} style={{ textDecoration: 'none' }}>
                     <div className="glass-card" style={{ padding: '1rem' }}>

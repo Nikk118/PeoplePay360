@@ -130,7 +130,7 @@ export default function WorkingSchedulesPage() {
             </p>
           </div>
 
-          {hasRole(['hr_manager', 'admin']) && (
+          {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
             <button onClick={() => setShowModal(true)} className="btn-primary">
               <Plus size={18} /> New Schedule Pattern
             </button>

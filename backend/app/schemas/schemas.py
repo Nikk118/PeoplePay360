@@ -28,6 +28,7 @@ class UserCreate(BaseModel):
     password: str
     employee_id: Optional[str] = None
     roles: List[str]
+    is_active: Optional[bool] = True
 
 # Department Schemas
 class DepartmentResponse(BaseModel):

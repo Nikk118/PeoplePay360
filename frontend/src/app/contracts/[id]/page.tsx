@@ -207,7 +207,7 @@ export default function ContractEditPage() {
               <textarea rows={3} value={contract.notes || ''} onChange={e => setContract({...contract, notes: e.target.value})} className="form-input" placeholder="Terms, position details..." />
             </div>
 
-            {hasRole(['hr_manager', 'admin']) && (
+            {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
                 <button type="submit" disabled={saving} className="btn-primary" style={{ padding: '0.75rem 1.75rem' }}>
                   <Save size={18} /> {saving ? 'Saving...' : 'Save Contract'}

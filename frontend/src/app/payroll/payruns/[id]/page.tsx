@@ -205,6 +205,26 @@ export default function PayrunDetailPage() {
     );
   }
 
+  if (user && !hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager'])) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
+        <Navbar />
+        <main style={{ maxWidth: '800px', margin: '4rem auto', padding: '2rem', textAlign: 'center' }}>
+          <div className="glass-panel" style={{ padding: '3rem 2rem' }}>
+            <AlertCircle size={48} color="var(--red)" style={{ margin: '0 auto 1rem' }} />
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Access Denied</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              HR Managers do not have access to payroll features (Payruns).
+            </p>
+            <Link href="/dashboard" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+              Return to Dashboard
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-main)' }}>
       <Navbar />
@@ -248,18 +268,20 @@ export default function PayrunDetailPage() {
             </div>
 
             {/* Workflow Action Buttons */}
-            {hasRole(['admin', 'hr_manager', 'hr_payroll_user', 'hr_payroll_manager']) && (
+            {hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager']) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 {payrun.status === 'draft' && (
                   <>
-                    <button
-                      onClick={handleDelete}
-                      disabled={actionLoading}
-                      className="btn btn-secondary"
-                      style={{ color: 'var(--red)', border: '1px solid var(--red-border)' }}
-                    >
-                      <Trash2 size={16} /> Delete
-                    </button>
+                    {hasRole(['admin', 'hr_payroll_manager']) && (
+                      <button
+                        onClick={handleDelete}
+                        disabled={actionLoading}
+                        className="btn btn-secondary"
+                        style={{ color: 'var(--red)', border: '1px solid var(--red-border)' }}
+                      >
+                        <Trash2 size={16} /> Delete
+                      </button>
+                    )}
 
                     <button
                       onClick={handleCompute}

@@ -265,7 +265,7 @@ function TimeOffRequestsContent() {
               ) : (
                 requests.map(req => {
                   const isOwnRequest = Boolean(user?.employee_id && user.employee_id === req.employee_id);
-                  const canApprove = hasRole(['hr_manager', 'hr_payroll_manager', 'admin']) && !(isOwnRequest && !user?.roles.includes('admin'));
+                  const canApprove = hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && !(isOwnRequest && !user?.roles.includes('admin'));
 
                   return (
                     <tr key={req.id}>

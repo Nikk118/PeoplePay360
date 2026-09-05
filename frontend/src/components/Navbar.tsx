@@ -87,25 +87,33 @@ export default function Navbar() {
             <Calendar size={15} /> Time Off
           </Link>
 
-          {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
+          {hasRole(['hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
             <Link href="/payroll/structures" style={linkStyle(isActive('/payroll/structures'))}>
               <Layers size={15} /> Structures
             </Link>
           )}
 
-          {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
+          {hasRole(['hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
             <Link href="/payroll/payruns" style={linkStyle(isActive('/payroll/payruns'))}>
               <DollarSign size={15} /> Payruns
             </Link>
           )}
 
-          <Link href="/payroll/payslips" style={linkStyle(isActive('/payroll/payslips'))}>
-            <FileText size={15} /> Payslips
-          </Link>
+          {!(hasRole(['hr_manager']) && !hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager'])) && (
+            <Link href="/payroll/payslips" style={linkStyle(isActive('/payroll/payslips'))}>
+              <FileText size={15} /> Payslips
+            </Link>
+          )}
 
           <Link href="/reports/dashboard" style={linkStyle(isActive('/reports') || isActive('/dashboard'))}>
             <BarChart2 size={15} /> Reports
           </Link>
+
+          {hasRole(['admin']) && (
+            <Link href="/admin/users" style={linkStyle(isActive('/admin/users'))}>
+              <Shield size={15} /> Users
+            </Link>
+          )}
         </div>
 
         {/* User info + logout */}

@@ -286,7 +286,7 @@ function AttendanceContent() {
             </select>
           </div>
 
-          {hasRole(['hr_manager', 'admin']) && (
+          {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
             <button onClick={openNewModal} className="btn-primary" style={{ padding: '0.65rem 1.25rem' }}>
               <Plus size={16} /> Manual Attendance
             </button>
@@ -305,7 +305,7 @@ function AttendanceContent() {
                 <th>Worked Hours</th>
                 <th>Status</th>
                 <th>Type</th>
-                {hasRole(['hr_manager', 'admin']) && <th style={{ textAlign: 'right' }}>Actions</th>}
+                {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && <th style={{ textAlign: 'right' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -350,7 +350,7 @@ function AttendanceContent() {
                           </span>
                         )}
                       </td>
-                      {hasRole(['hr_manager', 'admin']) && (
+                      {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
                         <td style={{ textAlign: 'right' }}>
                           <button onClick={() => openEditModal(rec)} className="btn-secondary" style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}>
                             Edit Entry

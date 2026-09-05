@@ -96,7 +96,8 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
+  const isPayrollUser = hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager']);
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,7 +122,7 @@ export default function DashboardPage() {
     try {
       const [deptRes, payrunRes] = await Promise.all([
         apiRequest<Department[]>('/departments').catch(() => []),
-        apiRequest<Payrun[]>('/payruns').catch(() => [])
+        isPayrollUser ? apiRequest<Payrun[]>('/payruns').catch(() => []) : Promise.resolve([])
       ]);
       setDepartments(deptRes);
       setPayruns(payrunRes);
@@ -160,13 +161,15 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-              <BarChart2 size={16} /> Executive Payroll Analytics
+              <BarChart2 size={16} /> {isPayrollUser ? 'Executive Payroll Analytics' : 'Organization & HR Analytics'}
             </div>
             <h1 style={{ fontSize: '1.875rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0, color: 'var(--text-main)' }}>
               Dashboard & Reports
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-              Live real-time organization metrics for payroll, attendance, leave, and compliance audits.
+              {isPayrollUser 
+                ? 'Live real-time organization metrics for payroll, attendance, leave, and compliance audits.'
+                : 'Live real-time organization metrics for attendance, leave management, and compliance audits.'}
             </p>
           </div>
 
@@ -200,36 +203,40 @@ export default function DashboardPage() {
             </select>
           </div>
 
-          {/* Payrun/Period Filter */}
-          <div style={{ minWidth: '200px' }}>
-            <select
-              className="form-input"
-              value={selectedPayrun}
-              onChange={e => setSelectedPayrun(e.target.value)}
-              style={{ fontSize: '0.85rem', padding: '0.4rem 0.75rem' }}
-            >
-              <option value="all">All Payroll Cycles</option>
-              {payruns.map(p => (
-                <option key={p.id} value={p.id}>{p.name} ({p.period_start})</option>
-              ))}
-            </select>
-          </div>
+          {/* Payrun/Period Filter - Payroll only */}
+          {isPayrollUser && (
+            <div style={{ minWidth: '200px' }}>
+              <select
+                className="form-input"
+                value={selectedPayrun}
+                onChange={e => setSelectedPayrun(e.target.value)}
+                style={{ fontSize: '0.85rem', padding: '0.4rem 0.75rem' }}
+              >
+                <option value="all">All Payroll Cycles</option>
+                {payruns.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} ({p.period_start})</option>
+                ))}
+              </select>
+            </div>
+          )}
 
-          {/* Status Filter */}
-          <div style={{ minWidth: '160px' }}>
-            <select
-              className="form-input"
-              value={selectedStatus}
-              onChange={e => setSelectedStatus(e.target.value)}
-              style={{ fontSize: '0.85rem', padding: '0.4rem 0.75rem' }}
-            >
-              <option value="all">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="computed">Computed</option>
-              <option value="validated">Validated</option>
-              <option value="paid">Paid</option>
-            </select>
-          </div>
+          {/* Status Filter - Payroll only */}
+          {isPayrollUser && (
+            <div style={{ minWidth: '160px' }}>
+              <select
+                className="form-input"
+                value={selectedStatus}
+                onChange={e => setSelectedStatus(e.target.value)}
+                style={{ fontSize: '0.85rem', padding: '0.4rem 0.75rem' }}
+              >
+                <option value="all">All Statuses</option>
+                <option value="draft">Draft</option>
+                <option value="computed">Computed</option>
+                <option value="validated">Validated</option>
+                <option value="paid">Paid</option>
+              </select>
+            </div>
+          )}
 
           {(selectedDept !== 'all' || selectedStatus !== 'all' || selectedPayrun !== 'all') && (
             <button
@@ -269,8 +276,9 @@ export default function DashboardPage() {
           </div>
         ) : data ? (
           <>
-            {/* KPI Cards Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.75rem' }}>
+            {/* KPI Cards Grid - Payroll users only */}
+            {isPayrollUser && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.75rem' }}>
               {/* Gross Salary */}
               <div className="glass-panel" style={{ padding: '1.35rem', position: 'relative', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -335,9 +343,11 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Row 2: Payslip Status Breakdown & Department Salary Chart */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem', marginBottom: '1.75rem' }}>
+            {/* Row 2: Payslip Status Breakdown & Department Salary Chart - Payroll users only */}
+            {isPayrollUser && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem', marginBottom: '1.75rem' }}>
 
               {/* Payslip Status Breakdown */}
               <div className="glass-panel" style={{ padding: '1.5rem' }}>
@@ -442,62 +452,64 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-
             </div>
+          )}
 
             {/* Row 3: Payroll Trends & Attendance / Leave */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem', marginBottom: '1.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isPayrollUser ? 'repeat(auto-fit, minmax(360px, 1fr))' : '1fr', gap: '1.5rem', marginBottom: '1.75rem' }}>
 
-              {/* Payroll Trends */}
-              <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <TrendingUp size={18} color="var(--green)" /> Payroll Period Trends
-                </h3>
+              {/* Payroll Trends - Payroll users only */}
+              {isPayrollUser && (
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <TrendingUp size={18} color="var(--green)" /> Payroll Period Trends
+                  </h3>
 
-                {data.payroll_trends.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0, textAlign: 'center', padding: '2rem 0' }}>
-                    No historical payrun cycles recorded yet.
-                  </p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    {data.payroll_trends.map(t => (
-                      <div
-                        key={t.payrun_id || t.payrun_name}
-                        style={{
-                          padding: '0.85rem 1rem',
-                          background: '#F8FAFC',
-                          border: '1px solid var(--border)',
-                          borderRadius: 'var(--radius-md)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          flexWrap: 'wrap',
-                          gap: '0.5rem'
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.9rem' }}>{t.payrun_name}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {t.period_start} to {t.period_end} • {t.payslip_count} payslips
+                  {data.payroll_trends.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0, textAlign: 'center', padding: '2rem 0' }}>
+                      No historical payrun cycles recorded yet.
+                    </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      {data.payroll_trends.map(t => (
+                        <div
+                          key={t.payrun_id || t.payrun_name}
+                          style={{
+                            padding: '0.85rem 1rem',
+                            background: '#F8FAFC',
+                            border: '1px solid var(--border)',
+                            borderRadius: 'var(--radius-md)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem'
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.9rem' }}>{t.payrun_name}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              {t.period_start} to {t.period_end} • {t.payslip_count} payslips
+                            </div>
+                          </div>
+
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontWeight: 800, color: 'var(--green)', fontSize: '0.95rem' }}>
+                              {formatCurrency(t.total_net)} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Net</span>
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              Gross: {formatCurrency(t.total_gross)}
+                            </div>
                           </div>
                         </div>
-
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: 800, color: 'var(--green)', fontSize: '0.95rem' }}>
-                            {formatCurrency(t.total_net)} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Net</span>
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            Gross: {formatCurrency(t.total_gross)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Attendance & Leave Summaries */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: !isPayrollUser ? 'repeat(auto-fit, minmax(340px, 1fr))' : '1fr', gap: '1.5rem' }}>
 
                 {/* Attendance Card */}
                 <div className="glass-panel" style={{ padding: '1.25rem' }}>
