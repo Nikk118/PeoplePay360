@@ -53,16 +53,21 @@ interface Department {
 export default function EmployeeHubPage() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
-  const { hasRole } = useAuth();
+  const { user, hasRole } = useAuth();
+
+  const isEmployeeOnly = user ? (!user.roles.some(r => ['admin', 'hr_manager', 'hr_payroll_user', 'hr_payroll_manager'].includes(r)) && user.roles.includes('employee')) : false;
 
   const [employee, setEmployee] = useState<EmployeeDetail | null>(null);
   const [stats, setStats] = useState<Stats>({ contracts_count: 0, attendance_count: 0, time_off_count: 0, allocations_count: 0 });
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
   const loadData = async () => {
+    setLoading(true);
+    setErrorMsg('');
     try {
       const [empData, statsData, deptData] = await Promise.all([
         apiRequest<EmployeeDetail>(`/employees/${id}`),
@@ -74,6 +79,7 @@ export default function EmployeeHubPage() {
       setDepartments(deptData);
     } catch (err: any) {
       console.error(err);
+      setErrorMsg(err.message || 'Failed to load employee hub');
     } finally {
       setLoading(false);
     }
@@ -103,6 +109,47 @@ export default function EmployeeHubPage() {
     }
   };
 
+  if (errorMsg) {
+    const isAccessDenied = errorMsg.toLowerCase().includes('access denied') || errorMsg.includes('403') || (isEmployeeOnly && user?.employee_id !== id);
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
+        <Navbar />
+        <div style={{ maxWidth: '600px', margin: '4rem auto', padding: '0 1.5rem', textAlign: 'center' }}>
+          <div className="glass-card" style={{ padding: '2.5rem' }}>
+            <div style={{
+              width: '3.5rem',
+              height: '3.5rem',
+              borderRadius: '50%',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: 'var(--red)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem'
+            }}>
+              <Shield size={28} />
+            </div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              {isAccessDenied ? 'Access Denied' : 'Error'}
+            </h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              {isAccessDenied
+                ? 'You do not have permission to view other employee profiles.'
+                : errorMsg}
+            </p>
+            <Link
+              href="/employees"
+              className="btn-primary"
+              style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1.25rem' }}
+            >
+              <ArrowLeft size={16} /> {isEmployeeOnly ? 'Back to My Profile' : 'Back to Directory'}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading || !employee) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
@@ -121,7 +168,7 @@ export default function EmployeeHubPage() {
       <main style={{ maxWidth: '1280px', margin: '2rem auto', padding: '0 1.5rem' }}>
         {/* Navigation Back */}
         <Link href="/employees" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-          <ArrowLeft size={16} /> Back to Directory
+          <ArrowLeft size={16} /> {isEmployeeOnly ? 'Back to My Profile' : 'Back to Directory'}
         </Link>
 
         {/* Top Header Card */}

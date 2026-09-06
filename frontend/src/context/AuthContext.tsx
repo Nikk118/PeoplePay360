@@ -71,11 +71,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const hasRole = (role: string | string[]) => {
     if (!user) return false;
-    if (user.roles.includes("admin")) return true;
-    if (Array.isArray(role)) {
-      return role.some(r => user.roles.includes(r));
+    const userRoles: string[] = (Array.isArray(user.roles) ? user.roles : []).map(r => String(r).toLowerCase().trim());
+    if ((user as any).role && typeof (user as any).role === 'string') {
+      const singleRole = (user as any).role.toLowerCase().trim();
+      if (!userRoles.includes(singleRole)) {
+        userRoles.push(singleRole);
+      }
     }
-    return user.roles.includes(role);
+    if (userRoles.includes("admin")) return true;
+    if (Array.isArray(role)) {
+      return role.some(r => userRoles.includes(String(r).toLowerCase().trim()));
+    }
+    return userRoles.includes(String(role).toLowerCase().trim());
   };
 
   return (

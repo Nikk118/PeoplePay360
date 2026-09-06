@@ -266,6 +266,7 @@ class AppUser(Base):
 
     employee = relationship("Employee")
     roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
+    invitation = relationship("UserInvitation", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 class UserRole(Base):
     __tablename__ = "user_roles"
@@ -274,3 +275,14 @@ class UserRole(Base):
     role = Column(String(30), nullable=False)  # employee, hr_manager, hr_payroll_user, hr_payroll_manager, admin
 
     user = relationship("AppUser", back_populates="roles")
+
+class UserInvitation(Base):
+    __tablename__ = "user_invitations"
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("app_users.id", ondelete="CASCADE"), nullable=False, unique=True)
+    token_hash = Column(String(64), nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    used_at = Column(DateTime, nullable=True)
+
+    user = relationship("AppUser", back_populates="invitation")

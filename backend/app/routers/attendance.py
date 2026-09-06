@@ -70,17 +70,28 @@ def list_attendance(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+    trusted_emp_id = app_user.employee_id if app_user else None
+
     query = db.query(models.Attendance).join(models.Employee)
     
     # If user is only an employee role, restrict to self
-    if "employee" in current_user.roles and not any(r in current_user.roles for r in ["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]):
-        if current_user.employee_id:
-            query = query.filter(models.Attendance.employee_id == current_user.employee_id)
+    if not is_admin_or_hr:
+        if not trusted_emp_id:
+            return []
+        if employee_id and employee_id != trusted_emp_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied. Employees can only view their own attendance records."
+            )
+        query = query.filter(models.Attendance.employee_id == trusted_emp_id)
+    else:
+        if employee_id:
+            query = query.filter(models.Attendance.employee_id == employee_id)
+        if department_id:
+            query = query.filter(models.Employee.department_id == department_id)
 
-    if employee_id:
-        query = query.filter(models.Attendance.employee_id == employee_id)
-    if department_id:
-        query = query.filter(models.Employee.department_id == department_id)
     if status:
         query = query.filter(models.Attendance.status == status)
     if date_from:
@@ -96,12 +107,14 @@ def get_today_attendance(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ):
-    if not current_user.employee_id:
+    app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+    trusted_emp_id = app_user.employee_id if app_user else None
+    if not trusted_emp_id:
         return None
         
     today_start = datetime.combine(date.today(), time.min)
     record = db.query(models.Attendance).filter(
-        models.Attendance.employee_id == current_user.employee_id,
+        models.Attendance.employee_id == trusted_emp_id,
         models.Attendance.check_in >= today_start
     ).order_by(models.Attendance.check_in.desc()).first()
     
@@ -114,24 +127,26 @@ def check_in(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ):
-    if not current_user.employee_id:
+    app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+    trusted_emp_id = app_user.employee_id if app_user else None
+    if not trusted_emp_id:
         raise HTTPException(status_code=400, detail="Current user has no linked employee profile")
         
     # Check if active check-in exists without check-out
     existing = db.query(models.Attendance).filter(
-        models.Attendance.employee_id == current_user.employee_id,
+        models.Attendance.employee_id == trusted_emp_id,
         models.Attendance.check_out == None
     ).first()
     
     if existing:
         raise HTTPException(status_code=400, detail="You are already checked in. Please check out first.")
         
-    emp = db.query(models.Employee).filter(models.Employee.id == current_user.employee_id).first()
+    emp = db.query(models.Employee).filter(models.Employee.id == trusted_emp_id).first()
     now_time = now_india()
     att_status = derive_status(now_time, None, emp)
     
     att = models.Attendance(
-        employee_id=current_user.employee_id,
+        employee_id=trusted_emp_id,
         check_in=now_time,
         check_out=None,
         worked_hours=0.0,
@@ -152,6 +167,16 @@ def check_out(
     att = db.query(models.Attendance).filter(models.Attendance.id == attendance_id).first()
     if not att:
         raise HTTPException(status_code=404, detail="Attendance record not found")
+
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    if not is_admin_or_hr:
+        app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+        trusted_emp_id = app_user.employee_id if app_user else None
+        if not trusted_emp_id or att.employee_id != trusted_emp_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied. Employees can only check out their own attendance."
+            )
         
     now_time = now_india()
     att.check_out = now_time
@@ -170,6 +195,16 @@ def get_attendance_summary(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    if not is_admin_or_hr:
+        app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+        trusted_emp_id = app_user.employee_id if app_user else None
+        if not trusted_emp_id or trusted_emp_id != employee_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied. Employees can only view their own attendance summary."
+            )
+
     emp = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")

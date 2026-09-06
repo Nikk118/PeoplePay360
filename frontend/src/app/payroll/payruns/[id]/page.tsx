@@ -308,7 +308,7 @@ export default function PayrunDetailPage() {
             {/* Workflow Action Buttons */}
             {hasRole(['admin', 'hr_payroll_user', 'hr_payroll_manager']) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {payrun.status === 'draft' && (
+                {payrun.status?.toLowerCase() === 'draft' && (
                   <>
                     {hasRole(['admin', 'hr_payroll_manager']) && (
                       <button

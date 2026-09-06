@@ -62,6 +62,8 @@ function TimeOffRequestsContent() {
   const filterEmpId = searchParams.get('employee_id');
 
   const { user, hasRole } = useAuth();
+  const isEmployeeOnly = user ? (!user.roles.some(r => ['admin', 'hr_manager', 'hr_payroll_user', 'hr_payroll_manager'].includes(r)) && user.roles.includes('employee')) : false;
+
   const [requests, setRequests] = useState<TimeOffRequest[]>([]);
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [types, setTypes] = useState<TimeOffType[]>([]);
@@ -85,23 +87,37 @@ function TimeOffRequestsContent() {
     setLoading(true);
     try {
       let reqQuery = `/time-off/requests?`;
-      if (selectedEmp) reqQuery += `employee_id=${selectedEmp}&`;
+      if (!isEmployeeOnly && selectedEmp) reqQuery += `employee_id=${selectedEmp}&`;
       if (selectedStatus) reqQuery += `status=${selectedStatus}&`;
 
-      const [rRes, tRes, eRes] = await Promise.all([
+      const promises: [Promise<TimeOffRequest[]>, Promise<TimeOffType[]>, Promise<Employee[]>] = [
         apiRequest<TimeOffRequest[]>(reqQuery),
         apiRequest<TimeOffType[]>('/time-off/types'),
-        apiRequest<Employee[]>('/employees')
-      ]);
+        isEmployeeOnly ? Promise.resolve([]) : apiRequest<Employee[]>('/employees')
+      ];
 
-      setRequests(rRes);
-      setTypes(tRes);
-      setEmployees(eRes);
+      const [rRes, tRes, eRes] = await Promise.all(promises);
 
-      const targetEmp = selectedEmp || (user?.employee_id ? user.employee_id : (eRes.length > 0 ? eRes[0].id : ''));
+      setRequests(rRes || []);
+      setTypes(tRes || []);
+      setEmployees(eRes || []);
+
+      const targetEmp = isEmployeeOnly
+        ? (user?.employee_id || '')
+        : (selectedEmp || (user?.employee_id ? user.employee_id : (eRes.length > 0 ? eRes[0].id : '')));
+
       if (targetEmp) {
         const bRes = await apiRequest<LeaveBalance[]>(`/time-off/balances?employee_id=${targetEmp}`);
-        setBalances(bRes);
+        setBalances(bRes || []);
+      }
+
+      // Initialize form defaults if types/employees are available
+      if (tRes.length > 0 || eRes.length > 0 || user?.employee_id) {
+        setFormData(prev => ({
+          ...prev,
+          time_off_type_id: prev.time_off_type_id || (tRes[0]?.id ?? ''),
+          employee_id: isEmployeeOnly ? (user?.employee_id || '') : (prev.employee_id || (user?.employee_id || (eRes[0]?.id ?? '')))
+        }));
       }
     } catch (err) {
       console.error(err);
@@ -112,16 +128,29 @@ function TimeOffRequestsContent() {
 
   useEffect(() => {
     loadData();
-  }, [selectedEmp, selectedStatus]);
+  }, [selectedEmp, selectedStatus, isEmployeeOnly]);
 
   const handleCreateRequest = async (e: React.FormEvent) => {
     e.preventDefault();
+    const effectiveTypeId = formData.time_off_type_id || (types[0]?.id ?? '');
+    const effectiveEmpId = isEmployeeOnly ? (user?.employee_id || '') : (formData.employee_id || user?.employee_id || (employees[0]?.id ?? ''));
+
+    if (!effectiveTypeId) {
+      alert('Please select a valid Leave Type.');
+      return;
+    }
+    if (!effectiveEmpId) {
+      alert('Your user account is not linked to an employee profile.');
+      return;
+    }
+
     try {
       await apiRequest('/time-off/requests', {
         method: 'POST',
         body: JSON.stringify({
           ...formData,
-          employee_id: formData.employee_id || user?.employee_id
+          employee_id: effectiveEmpId,
+          time_off_type_id: effectiveTypeId
         })
       });
       setShowModal(false);
@@ -158,26 +187,34 @@ function TimeOffRequestsContent() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              Time Off Requests & Approvals
+              {isEmployeeOnly ? 'My Time Off' : 'Time Off Requests & Approvals'}
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-              Employee leave requests, HR approvals, and real-time allocation balance management
+              {isEmployeeOnly
+                ? 'Your personal leave requests, real-time balances, and time off history'
+                : 'Employee leave requests, HR approvals, and real-time allocation balance management'}
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <Link href="/time-off/allocations" className="btn-secondary">
-              <PieChart size={16} /> Allocations
-            </Link>
+            {!isEmployeeOnly && (
+              <>
+                <Link href="/time-off/allocations" className="btn-secondary">
+                  <PieChart size={16} /> Allocations
+                </Link>
 
-            <Link href="/time-off/types" className="btn-secondary">
-              <Tag size={16} /> Leave Types
-            </Link>
+                <Link href="/time-off/types" className="btn-secondary">
+                  <Tag size={16} /> Leave Types
+                </Link>
+              </>
+            )}
 
             <button onClick={() => {
+              const defaultEmp = isEmployeeOnly ? (user?.employee_id || '') : (selectedEmp || (user?.employee_id ? user.employee_id : (employees.length > 0 ? employees[0].id : '')));
+              const defaultType = types.length > 0 ? types[0].id : '';
               setFormData({
-                employee_id: selectedEmp || (user?.employee_id ? user.employee_id : (employees.length > 0 ? employees[0].id : '')),
-                time_off_type_id: types.length > 0 ? types[0].id : '',
+                employee_id: defaultEmp,
+                time_off_type_id: defaultType,
                 date_from: '2026-09-15',
                 date_to: '2026-09-17',
                 reason: 'Personal leave'
@@ -192,7 +229,7 @@ function TimeOffRequestsContent() {
         {/* Leave Balances Display Bar */}
         <div style={{ marginBottom: '1.75rem' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-            Leave Balance Overview ({selectedEmp ? 'Selected Employee' : 'My Balances'})
+            {isEmployeeOnly ? 'My Leave Balances' : `Leave Balance Overview (${selectedEmp ? 'Selected Employee' : 'My Balances'})`}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
@@ -226,14 +263,16 @@ function TimeOffRequestsContent() {
 
         {/* Filter Bar */}
         <div className="glass-card" style={{ padding: '1rem 1.25rem', marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ flex: 1 }}>
-            <select value={selectedEmp} onChange={e => setSelectedEmp(e.target.value)} className="form-select">
-              <option value="">All Employees</option>
-              {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
-            </select>
-          </div>
+          {!isEmployeeOnly && (
+            <div style={{ flex: 1 }}>
+              <select value={selectedEmp} onChange={e => setSelectedEmp(e.target.value)} className="form-select">
+                <option value="">All Employees</option>
+                {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
+              </select>
+            </div>
+          )}
 
-          <div style={{ width: '200px' }}>
+          <div style={{ width: isEmployeeOnly ? '100%' : '200px' }}>
             <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="form-select">
               <option value="">All Statuses</option>
               <option value="pending">Pending</option>
@@ -248,20 +287,20 @@ function TimeOffRequestsContent() {
           <table className="custom-table">
             <thead>
               <tr>
-                <th>Employee</th>
+                {!isEmployeeOnly && <th>Employee</th>}
                 <th>Leave Type</th>
                 <th>Duration</th>
                 <th>Dates</th>
                 <th>Reason</th>
                 <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Actions / Approver</th>
+                <th style={{ textAlign: 'right' }}>{isEmployeeOnly ? 'Status / Reviewer' : 'Actions / Approver'}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>Loading leave requests...</td></tr>
+                <tr><td colSpan={isEmployeeOnly ? 6 : 7} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>Loading leave requests...</td></tr>
               ) : requests.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>No time off requests found.</td></tr>
+                <tr><td colSpan={isEmployeeOnly ? 6 : 7} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>No time off requests found.</td></tr>
               ) : (
                 requests.map(req => {
                   const isOwnRequest = Boolean(user?.employee_id && user.employee_id === req.employee_id);
@@ -269,10 +308,12 @@ function TimeOffRequestsContent() {
 
                   return (
                     <tr key={req.id}>
-                      <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{req.employee_name || '—'}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{req.department_name}</div>
-                      </td>
+                      {!isEmployeeOnly && (
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{req.employee_name || '—'}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{req.department_name}</div>
+                        </td>
+                      )}
                       <td>
                         <span className="badge badge-computed">{req.time_off_type_name}</span>
                       </td>
@@ -327,16 +368,18 @@ function TimeOffRequestsContent() {
               </h2>
 
               <form onSubmit={handleCreateRequest} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Employee *</label>
-                  <select required value={formData.employee_id} onChange={e => setFormData({...formData, employee_id: e.target.value})} className="form-select">
-                    {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
-                  </select>
-                </div>
+                {!isEmployeeOnly && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Employee *</label>
+                    <select required value={formData.employee_id || (user?.employee_id ? user.employee_id : (employees[0]?.id ?? ''))} onChange={e => setFormData({...formData, employee_id: e.target.value})} className="form-select">
+                      {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Leave Type *</label>
-                  <select required value={formData.time_off_type_id} onChange={e => setFormData({...formData, time_off_type_id: e.target.value})} className="form-select">
+                  <select required value={formData.time_off_type_id || (types[0]?.id ?? '')} onChange={e => setFormData({...formData, time_off_type_id: e.target.value})} className="form-select">
                     {types.map(t => <option key={t.id} value={t.id}>{t.name} ({t.code})</option>)}
                   </select>
                 </div>

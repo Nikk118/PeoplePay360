@@ -30,13 +30,16 @@ interface Department {
 }
 
 export default function EmployeesPage() {
-  const { hasRole } = useAuth();
+  const { user, hasRole } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('list');
   const [search, setSearch] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Check if current user is purely an employee (no HR/Admin roles)
+  const isEmployeeOnly = user ? (!user.roles.some(r => ['admin', 'hr_manager', 'hr_payroll_user', 'hr_payroll_manager'].includes(r)) && user.roles.includes('employee')) : false;
 
   // New Employee Modal state
   const [showModal, setShowModal] = useState(false);
@@ -55,16 +58,22 @@ export default function EmployeesPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      let query = `/employees?`;
-      if (search) query += `search=${encodeURIComponent(search)}&`;
-      if (selectedDept) query += `department_id=${selectedDept}&`;
-      
-      const [empRes, deptRes] = await Promise.all([
-        apiRequest<Employee[]>(query),
-        apiRequest<Department[]>('/departments')
-      ]);
-      setEmployees(empRes);
-      setDepartments(deptRes);
+      if (isEmployeeOnly) {
+        // Employee role only fetches their own record via object-authorized endpoint
+        const empRes = await apiRequest<Employee[]>('/employees');
+        setEmployees(empRes || []);
+      } else {
+        let query = `/employees?`;
+        if (search) query += `search=${encodeURIComponent(search)}&`;
+        if (selectedDept) query += `department_id=${selectedDept}&`;
+        
+        const [empRes, deptRes] = await Promise.all([
+          apiRequest<Employee[]>(query),
+          apiRequest<Department[]>('/departments')
+        ]);
+        setEmployees(empRes || []);
+        setDepartments(deptRes || []);
+      }
     } catch (err) {
       console.error('Failed to load employees:', err);
     } finally {
@@ -74,7 +83,7 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     loadData();
-  }, [search, selectedDept]);
+  }, [search, selectedDept, isEmployeeOnly]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,8 +111,155 @@ export default function EmployeesPage() {
   };
 
   const activeEmployees = employees.filter(e => e.status === 'active');
- 
 
+  // Dedicated Employee View: shows ONLY the logged-in employee's own profile without search/directory/actions
+  if (isEmployeeOnly) {
+    const myProfile = employees.length > 0 ? employees[0] : null;
+
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
+        <Navbar />
+
+        <main style={{ maxWidth: '1000px', margin: '2rem auto', padding: '0 1.5rem' }}>
+          <div style={{ marginBottom: '2rem' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              My Employee Profile
+            </h1>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+              Your personal employment and organization profile
+            </p>
+          </div>
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+              Loading your employee profile...
+            </div>
+          ) : !myProfile ? (
+            <div className="glass-card" style={{ padding: '3rem', textAlign: 'center' }}>
+              <div style={{
+                width: '3.5rem',
+                height: '3.5rem',
+                borderRadius: '50%',
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: 'var(--red)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.25rem'
+              }}>
+                <Users size={28} />
+              </div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                Employee profile not found
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '480px', margin: '0 auto' }}>
+                Your user account is not currently linked to an active employee profile. Please contact your organization administrator or HR team.
+              </p>
+            </div>
+          ) : (
+            <div>
+              {/* Profile Card Header */}
+              <div className="glass-card" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                  <div style={{
+                    width: '4.5rem',
+                    height: '4.5rem',
+                    borderRadius: '1rem',
+                    background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#FFF',
+                    fontWeight: 800,
+                    fontSize: '1.75rem'
+                  }}>
+                    {myProfile.first_name?.[0]}{myProfile.last_name?.[0]}
+                  </div>
+                  <div style={{ flex: 1, minWidth: '200px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                        {myProfile.first_name} {myProfile.last_name}
+                      </h2>
+                      <span className={`badge badge-${myProfile.status}`} style={{ textTransform: 'capitalize' }}>
+                        {myProfile.status}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginTop: '0.5rem', flexWrap: 'wrap', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                      <span><strong>ID:</strong> {myProfile.employee_number}</span>
+                      <span><strong>Role:</strong> {myProfile.job_title || 'Employee'}</span>
+                      <span><strong>Department:</strong> {myProfile.department_name || 'Unassigned'}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <Link
+                      href={`/employees/${myProfile.id}`}
+                      className="btn-primary"
+                      style={{ textDecoration: 'none', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
+                    >
+                      View Operational Hub →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detail Sections Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                {/* Employment Information */}
+                <div className="glass-card" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Briefcase size={18} color="var(--primary)" /> Employment Information
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.875rem' }}>
+                    <div>
+                      <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: '0.75rem' }}>Department</span>
+                      <strong style={{ color: 'var(--text-main)' }}>{myProfile.department_name || '—'}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: '0.75rem' }}>Job Title</span>
+                      <strong style={{ color: 'var(--text-main)' }}>{myProfile.job_title || '—'}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: '0.75rem' }}>Job Position</span>
+                      <strong style={{ color: 'var(--text-main)' }}>{myProfile.job_position || '—'}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: '0.75rem' }}>Employment Type</span>
+                      <span className="badge" style={{ background: 'var(--primary-light)', color: 'var(--primary)', textTransform: 'capitalize' }}>
+                        {myProfile.employee_type?.replace('_', ' ') || 'Full Time'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div className="glass-card" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Mail size={18} color="var(--primary)" /> Contact Details
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.875rem' }}>
+                    <div>
+                      <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: '0.75rem' }}>Email</span>
+                      <strong style={{ color: 'var(--text-main)' }}>{myProfile.email || '—'}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: '0.75rem' }}>Phone</span>
+                      <strong style={{ color: 'var(--text-main)' }}>{myProfile.phone || '—'}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: '0.75rem' }}>Employee Number</span>
+                      <strong style={{ color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>{myProfile.employee_number}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  // Admin / HR View: Central Employee Directory
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
       <Navbar />
@@ -176,7 +332,7 @@ export default function EmployeesPage() {
               </button>
             </div>
 
-            {hasRole(['hr_manager', 'hr_payroll_user', 'hr_payroll_manager', 'admin']) && (
+            {hasRole('admin') && (
               <button
                 onClick={() => setShowModal(true)}
                 className="btn-primary"

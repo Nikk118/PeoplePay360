@@ -46,6 +46,7 @@ function AttendanceContent() {
   const filterEmpId = searchParams.get('employee_id');
 
   const { user, hasRole } = useAuth();
+  const isEmployeeOnly = user ? (!user.roles.some(r => ['admin', 'hr_manager', 'hr_payroll_user', 'hr_payroll_manager'].includes(r)) && user.roles.includes('employee')) : false;
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -197,10 +198,12 @@ function AttendanceContent() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1.25rem' }}>
           <div>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              Attendance Tracking & Operations
+              {isEmployeeOnly ? 'My Attendance' : 'Attendance Tracking & Operations'}
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-              Daily timestamped check-in/out records, worked hours computation, and exception management
+              {isEmployeeOnly
+                ? 'Your daily check-in/out timestamps, worked hours, and attendance history'
+                : 'Daily timestamped check-in/out records, worked hours computation, and exception management'}
             </p>
           </div>
 
@@ -262,21 +265,25 @@ function AttendanceContent() {
 
         {/* Filter & Action Controls */}
         <div className="glass-card" style={{ padding: '1rem 1.25rem', marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '200px' }}>
-            <select value={selectedEmp} onChange={e => setSelectedEmp(e.target.value)} className="form-select">
-              <option value="">All Employees</option>
-              {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
-            </select>
-          </div>
+          {!isEmployeeOnly && (
+            <>
+              <div style={{ flex: 1, minWidth: '200px' }}>
+                <select value={selectedEmp} onChange={e => setSelectedEmp(e.target.value)} className="form-select">
+                  <option value="">All Employees</option>
+                  {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
+                </select>
+              </div>
 
-          <div style={{ width: '200px' }}>
-            <select value={selectedDept} onChange={e => setSelectedDept(e.target.value)} className="form-select">
-              <option value="">All Departments</option>
-              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-          </div>
+              <div style={{ width: '200px' }}>
+                <select value={selectedDept} onChange={e => setSelectedDept(e.target.value)} className="form-select">
+                  <option value="">All Departments</option>
+                  {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
+            </>
+          )}
 
-          <div style={{ width: '180px' }}>
+          <div style={{ width: isEmployeeOnly ? '100%' : '180px' }}>
             <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="form-select">
               <option value="">All Statuses</option>
               <option value="present">Present</option>
@@ -299,7 +306,7 @@ function AttendanceContent() {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Employee</th>
+                {!isEmployeeOnly && <th>Employee</th>}
                 <th>Check In</th>
                 <th>Check Out</th>
                 <th>Worked Hours</th>
@@ -310,9 +317,9 @@ function AttendanceContent() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>Loading attendance records...</td></tr>
+                <tr><td colSpan={isEmployeeOnly ? 6 : 8} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>Loading attendance records...</td></tr>
               ) : attendance.length === 0 ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>No attendance entries found.</td></tr>
+                <tr><td colSpan={isEmployeeOnly ? 6 : 8} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>No attendance entries found.</td></tr>
               ) : (
                 attendance.map(rec => {
                   const checkInDate = new Date(rec.check_in);
@@ -321,10 +328,12 @@ function AttendanceContent() {
                       <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
                         {checkInDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
-                      <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{rec.employee_name || '—'}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{rec.department_name}</div>
-                      </td>
+                      {!isEmployeeOnly && (
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{rec.employee_name || '—'}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{rec.department_name}</div>
+                        </td>
+                      )}
                       <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--primary)' }}>
                         {checkInDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </td>

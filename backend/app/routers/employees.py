@@ -54,13 +54,18 @@ def list_employees(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
-    query = db.query(models.Employee)
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
     
-    # If user is only employee (no HR/Admin role), return only self or team
-    if "employee" in current_user.roles and not any(r in current_user.roles for r in ["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]):
-        if current_user.employee_id:
-            query = query.filter(models.Employee.id == current_user.employee_id)
-            
+    # Object-level check: Employee role must ONLY receive their own employee record
+    if not is_admin_or_hr:
+        app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+        trusted_emp_id = app_user.employee_id if app_user else None
+        if not trusted_emp_id:
+            return []
+        emp = db.query(models.Employee).filter(models.Employee.id == trusted_emp_id).first()
+        return [build_employee_response(emp)] if emp else []
+
+    query = db.query(models.Employee)
     if department_id:
         query = query.filter(models.Employee.department_id == department_id)
     if status:
@@ -87,11 +92,13 @@ def get_my_employee(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ):
-    if not current_user.employee_id:
-        raise HTTPException(status_code=404, detail="No employee linked to this user")
-    emp = db.query(models.Employee).filter(models.Employee.id == current_user.employee_id).first()
+    app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+    trusted_emp_id = app_user.employee_id if app_user else None
+    if not trusted_emp_id:
+        raise HTTPException(status_code=404, detail="Employee profile not found")
+    emp = db.query(models.Employee).filter(models.Employee.id == trusted_emp_id).first()
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        raise HTTPException(status_code=404, detail="Employee profile not found")
     return build_employee_response(emp)
 
 @router.get("/{employee_id}", response_model=EmployeeResponse)
@@ -100,6 +107,16 @@ def get_employee(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    if not is_admin_or_hr:
+        app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+        trusted_emp_id = app_user.employee_id if app_user else None
+        if not trusted_emp_id or trusted_emp_id != employee_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Employees can only view their own employee profile."
+            )
+
     emp = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -111,6 +128,16 @@ def get_employee_stats(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    if not is_admin_or_hr:
+        app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+        trusted_emp_id = app_user.employee_id if app_user else None
+        if not trusted_emp_id or trusted_emp_id != employee_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Employees can only view their own employee stats."
+            )
+
     emp = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -160,3 +187,17 @@ def update_employee(
     db.commit()
     db.refresh(emp)
     return build_employee_response(emp)
+
+@router.delete("/{employee_id}")
+def delete_employee(
+    employee_id: str,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_roles(["admin"]))
+):
+    emp = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    db.delete(emp)
+    db.commit()
+    return {"success": True, "message": "Employee deleted successfully"}
+

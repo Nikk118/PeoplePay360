@@ -22,13 +22,50 @@ class UserResponse(BaseModel):
     employee_name: Optional[str] = None
     is_active: bool
     roles: List[str]
+    invitation_pending: bool = False
+    invitation_link: Optional[str] = None
+    email_sent: bool = True
+    email_error: Optional[str] = None
+
+class NewEmployeeCreateInput(BaseModel):
+    first_name: str
+    last_name: str
+    employee_number: Optional[str] = None
+    department_id: Optional[str] = None
+    job_title: Optional[str] = None
+    employee_type: str = "full_time"
+    phone: Optional[str] = None
 
 class UserCreate(BaseModel):
     email: str
-    password: str
+    password: Optional[str] = None
     employee_id: Optional[str] = None
     roles: List[str]
-    is_active: Optional[bool] = True
+    is_active: Optional[bool] = None
+    new_employee: Optional[NewEmployeeCreateInput] = None
+
+class UserLinkEmployee(BaseModel):
+    employee_id: str
+
+class ValidateInvitationResponse(BaseModel):
+    valid: bool
+    email: str
+    employee_name: Optional[str] = None
+    role: Optional[str] = None
+
+class SetPasswordRequest(BaseModel):
+    token: str
+    password: str
+    confirm_password: str
+
+class SetPasswordResponse(BaseModel):
+    success: bool
+    message: str
+
+class ResendInvitationResponse(BaseModel):
+    success: bool
+    message: str
+    invitation_link: Optional[str] = None
 
 # Department Schemas
 class DepartmentResponse(BaseModel):

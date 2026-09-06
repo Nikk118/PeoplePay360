@@ -83,13 +83,25 @@ def list_allocations(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
-    query = db.query(models.TimeOffAllocation)
-    if "employee" in current_user.roles and not any(r in current_user.roles for r in ["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]):
-        if current_user.employee_id:
-            query = query.filter(models.TimeOffAllocation.employee_id == current_user.employee_id)
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+    trusted_emp_id = app_user.employee_id if app_user else None
 
-    if employee_id:
-        query = query.filter(models.TimeOffAllocation.employee_id == employee_id)
+    query = db.query(models.TimeOffAllocation)
+
+    if not is_admin_or_hr:
+        if not trusted_emp_id:
+            return []
+        if employee_id and employee_id != trusted_emp_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied. Employees can only view their own time off allocations."
+            )
+        query = query.filter(models.TimeOffAllocation.employee_id == trusted_emp_id)
+    else:
+        if employee_id:
+            query = query.filter(models.TimeOffAllocation.employee_id == employee_id)
+
     if time_off_type_id:
         query = query.filter(models.TimeOffAllocation.time_off_type_id == time_off_type_id)
     if status:
@@ -194,13 +206,25 @@ def list_requests(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
-    query = db.query(models.TimeOffRequest)
-    if "employee" in current_user.roles and not any(r in current_user.roles for r in ["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]):
-        if current_user.employee_id:
-            query = query.filter(models.TimeOffRequest.employee_id == current_user.employee_id)
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+    trusted_emp_id = app_user.employee_id if app_user else None
 
-    if employee_id:
-        query = query.filter(models.TimeOffRequest.employee_id == employee_id)
+    query = db.query(models.TimeOffRequest)
+
+    if not is_admin_or_hr:
+        if not trusted_emp_id:
+            return []
+        if employee_id and employee_id != trusted_emp_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied. Employees can only view their own time off requests."
+            )
+        query = query.filter(models.TimeOffRequest.employee_id == trusted_emp_id)
+    else:
+        if employee_id:
+            query = query.filter(models.TimeOffRequest.employee_id == employee_id)
+
     if time_off_type_id:
         query = query.filter(models.TimeOffRequest.time_off_type_id == time_off_type_id)
     if status:
@@ -215,9 +239,29 @@ def create_request(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
-    emp = db.query(models.Employee).filter(models.Employee.id == data.employee_id).first()
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+    trusted_emp_id = app_user.employee_id if app_user else None
+
+    # Enforce trusted employee ID for non-admin/non-HR
+    if not is_admin_or_hr:
+        if not trusted_emp_id:
+            raise HTTPException(status_code=400, detail="Current user has no linked employee profile")
+        if data.employee_id and data.employee_id != trusted_emp_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Employees can only create time off requests for themselves."
+            )
+        target_employee_id = trusted_emp_id
+    else:
+        target_employee_id = data.employee_id
+
+    emp = db.query(models.Employee).filter(models.Employee.id == target_employee_id).first()
     if not emp:
         raise HTTPException(status_code=400, detail="Employee not found")
+
+    if not data.time_off_type_id or not data.time_off_type_id.strip():
+        raise HTTPException(status_code=400, detail="Time Off Type ID is required")
 
     tt = db.query(models.TimeOffType).filter(models.TimeOffType.id == data.time_off_type_id).first()
     if not tt:
@@ -231,7 +275,7 @@ def create_request(
     alloc_id = None
     if tt.requires_allocation:
         alloc = db.query(models.TimeOffAllocation).filter(
-            models.TimeOffAllocation.employee_id == data.employee_id,
+            models.TimeOffAllocation.employee_id == target_employee_id,
             models.TimeOffAllocation.time_off_type_id == data.time_off_type_id,
             models.TimeOffAllocation.status == "approved",
             models.TimeOffAllocation.date_from <= data.date_to,
@@ -241,7 +285,7 @@ def create_request(
             alloc_id = alloc.id
 
     req = models.TimeOffRequest(
-        employee_id=data.employee_id,
+        employee_id=target_employee_id,
         time_off_type_id=data.time_off_type_id,
         allocation_id=alloc_id,
         date_from=data.date_from,
@@ -274,7 +318,7 @@ def approve_request(
     # HR Managers cannot approve or refuse their own leave requests
     if user_emp_id and user_emp_id == req.employee_id and "admin" not in current_user.roles:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=403,
             detail="HR Managers cannot approve or refuse their own leave requests. An HR Payroll Manager or Admin must review it."
         )
 
@@ -337,7 +381,7 @@ def refuse_request(
     # HR Managers cannot approve or refuse their own leave requests
     if user_emp_id and user_emp_id == req.employee_id and "admin" not in current_user.roles:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=403,
             detail="HR Managers cannot approve or refuse their own leave requests. An HR Payroll Manager or Admin must review it."
         )
 
@@ -360,11 +404,29 @@ def refuse_request(
 # -------------------------------
 @router.get("/balances", response_model=List[LeaveBalanceResponse])
 def get_leave_balances(
-    employee_id: str = Query(...),
+    employee_id: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
-    emp = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+    trusted_emp_id = app_user.employee_id if app_user else None
+
+    if not is_admin_or_hr:
+        if not trusted_emp_id:
+            return []
+        if employee_id and employee_id != trusted_emp_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied. Employees can only view their own leave balances."
+            )
+        target_emp_id = trusted_emp_id
+    else:
+        target_emp_id = employee_id or trusted_emp_id
+        if not target_emp_id:
+            raise HTTPException(status_code=400, detail="employee_id query parameter is required.")
+
+    emp = db.query(models.Employee).filter(models.Employee.id == target_emp_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
@@ -373,7 +435,7 @@ def get_leave_balances(
 
     for tt in types:
         allocs = db.query(models.TimeOffAllocation).filter(
-            models.TimeOffAllocation.employee_id == employee_id,
+            models.TimeOffAllocation.employee_id == target_emp_id,
             models.TimeOffAllocation.time_off_type_id == tt.id,
             models.TimeOffAllocation.status == "approved"
         ).all()
@@ -383,7 +445,7 @@ def get_leave_balances(
         remaining = max(0.0, allocated - taken)
 
         results.append(LeaveBalanceResponse(
-            employee_id=employee_id,
+            employee_id=target_emp_id,
             time_off_type_id=tt.id,
             type_name=tt.name,
             type_code=tt.code,

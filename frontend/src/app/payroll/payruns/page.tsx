@@ -277,7 +277,7 @@ export default function PayrunsListPage() {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid var(--border-glass)' }}>
-                  {payrun.status === 'draft' && hasRole(['admin', 'hr_payroll_manager']) && (
+                  {payrun.status?.toLowerCase() === 'draft' && hasRole(['admin', 'hr_payroll_manager']) && (
                     <button
                       onClick={(e) => handleDeleteDraft(payrun.id, e)}
                       disabled={deletingId === payrun.id}
@@ -286,7 +286,7 @@ export default function PayrunsListPage() {
                       <Trash2 size={14} /> Delete
                     </button>
                   )}
-                  {payrun.status !== 'draft' && <span />}
+                  {payrun.status?.toLowerCase() !== 'draft' && <span />}
 
                   <Link
                     href={`/payroll/payruns/${payrun.id}`}

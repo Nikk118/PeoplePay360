@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiRequest } from '@/lib/api';
 import {
   Users, Shield, Plus, RefreshCw, CheckCircle,
-  AlertCircle, Mail, UserCheck
+  AlertCircle, Mail, UserCheck, Send, Trash2, Link2
 } from 'lucide-react';
 
 interface AppUserRecord {
@@ -17,6 +17,10 @@ interface AppUserRecord {
   employee_name?: string;
   is_active: boolean;
   roles: string[];
+  invitation_pending?: boolean;
+  invitation_link?: string;
+  email_sent?: boolean;
+  email_error?: string;
 }
 
 interface EmployeeOption {
@@ -27,13 +31,20 @@ interface EmployeeOption {
   email?: string;
 }
 
+interface DepartmentOption {
+  id: string;
+  name: string;
+}
+
 export default function AdminUsersPage() {
   const { user, hasRole } = useAuth();
   const [users, setUsers] = useState<AppUserRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -41,11 +52,17 @@ export default function AdminUsersPage() {
   const [modalError, setModalError] = useState<string | null>(null);
 
   // Form Fields
+  const [selectedRole, setSelectedRole] = useState('employee');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState('hr_payroll_user');
-  const [accountStatus, setAccountStatus] = useState<boolean>(true);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Link Employee Modal State
+  const [linkingUser, setLinkingUser] = useState<AppUserRecord | null>(null);
+  const [linkModalEmployeeId, setLinkModalEmployeeId] = useState('');
+  const [linkingLoading, setLinkingLoading] = useState(false);
+  const [linkModalError, setLinkModalError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsersAndEmployees();
@@ -55,12 +72,14 @@ export default function AdminUsersPage() {
     setLoading(true);
     setError(null);
     try {
-      const [usersData, empData] = await Promise.all([
+      const [usersData, empData, deptData] = await Promise.all([
         apiRequest<AppUserRecord[]>('/users'),
-        apiRequest<EmployeeOption[]>('/employees').catch(() => [])
+        apiRequest<EmployeeOption[]>('/employees').catch(() => []),
+        apiRequest<DepartmentOption[]>('/departments').catch(() => [])
       ]);
       setUsers(usersData);
       setEmployees(empData);
+      setDepartments(deptData);
     } catch (err: any) {
       setError(err.message || 'Failed to load user records');
     } finally {
@@ -69,11 +88,9 @@ export default function AdminUsersPage() {
   };
 
   const handleOpenModal = () => {
+    setSelectedRole('employee');
     setSelectedEmployeeId('');
     setEmail('');
-    setPassword('');
-    setSelectedRole('hr_payroll_user');
-    setAccountStatus(true);
     setModalError(null);
     setShowModal(true);
   };
@@ -90,34 +107,67 @@ export default function AdminUsersPage() {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      setModalError('Work email and manual password are required.');
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setModalError('Work email is required.');
+      return;
+    }
+
+    if (selectedRole === 'employee' && !selectedEmployeeId) {
+      setModalError('Please select an existing employee to link to this account.');
       return;
     }
 
     setSubmitting(true);
     setModalError(null);
+    setActionError(null);
+    setActionSuccess(null);
 
     try {
-      await apiRequest<AppUserRecord>('/users', {
+      const payload: any = {
+        email: cleanEmail,
+        roles: [selectedRole]
+      };
+
+      if (selectedEmployeeId) {
+        payload.employee_id = selectedEmployeeId;
+      }
+
+      const res = await apiRequest<AppUserRecord>('/users', {
         method: 'POST',
-        body: JSON.stringify({
-          email: email.trim(),
-          password: password.trim(),
-          employee_id: selectedEmployeeId ? selectedEmployeeId : null,
-          roles: [selectedRole],
-          is_active: accountStatus
-        })
+        body: JSON.stringify(payload)
       });
 
       setShowModal(false);
-      setActionSuccess(`User ${email} created successfully with role ${selectedRole}.`);
+      if (res.email_sent === false) {
+        setActionError(`User account created in pending state, but invitation email could not be sent: ${res.email_error}`);
+        setTimeout(() => setActionError(null), 10000);
+      } else {
+        setActionSuccess(`Invitation email successfully sent to ${cleanEmail} via Resend.`);
+        setTimeout(() => setActionSuccess(null), 6000);
+      }
+      fetchUsersAndEmployees();
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to create and invite user');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleResendInvitation = async (userId: string, userEmail: string) => {
+    setResendingId(userId);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const res = await apiRequest<{ success: boolean; message: string }>(`/users/${userId}/resend-invitation`, { method: 'POST' });
+      setActionSuccess(res.message || `Invitation successfully sent to ${userEmail} via Resend.`);
       setTimeout(() => setActionSuccess(null), 5000);
       fetchUsersAndEmployees();
     } catch (err: any) {
-      setModalError(err.message || 'Failed to create user');
+      setActionError(err.message || 'Failed to resend invitation email via Resend');
+      setTimeout(() => setActionError(null), 8000);
     } finally {
-      setSubmitting(false);
+      setResendingId(null);
     }
   };
 
@@ -127,6 +177,53 @@ export default function AdminUsersPage() {
       fetchUsersAndEmployees();
     } catch (err: any) {
       alert(err.message || 'Failed to update user status');
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    if (!window.confirm(`Are you sure you want to delete this user (${userEmail})?`)) {
+      return;
+    }
+
+    setDeletingId(userId);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      await apiRequest(`/users/${userId}`, { method: 'DELETE' });
+      setActionSuccess(`User ${userEmail} was successfully deleted.`);
+      setTimeout(() => setActionSuccess(null), 5000);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+    } catch (err: any) {
+      setActionError(err.message || 'Failed to delete user');
+      setTimeout(() => setActionError(null), 8000);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleLinkEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!linkingUser || !linkModalEmployeeId) return;
+
+    setLinkingLoading(true);
+    setLinkModalError(null);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const res = await apiRequest<AppUserRecord>(`/users/${linkingUser.id}/link-employee`, {
+        method: 'PATCH',
+        body: JSON.stringify({ employee_id: linkModalEmployeeId })
+      });
+      setActionSuccess(`User ${linkingUser.email} was successfully linked to ${res.employee_name}.`);
+      setTimeout(() => setActionSuccess(null), 5000);
+      setLinkingUser(null);
+      fetchUsersAndEmployees();
+    } catch (err: any) {
+      setLinkModalError(err.message || 'Failed to link employee to user account');
+    } finally {
+      setLinkingLoading(false);
     }
   };
 
@@ -203,6 +300,13 @@ export default function AdminUsersPage() {
           </div>
         )}
 
+        {actionError && (
+          <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red-border)', color: 'var(--red)', padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertCircle size={18} />
+            <span>{actionError}</span>
+          </div>
+        )}
+
         {error && (
           <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red-border)', color: 'var(--red)', padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <AlertCircle size={18} />
@@ -247,10 +351,27 @@ export default function AdminUsersPage() {
                         {u.employee_name ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-main)' }}>
                             <UserCheck size={14} color="var(--green)" />
-                            <span>{u.employee_name}</span>
+                            <span style={{ fontWeight: 600 }}>{u.employee_name}</span>
+                          </div>
+                        ) : u.roles.includes('employee') ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ color: 'var(--red)', fontWeight: 600, fontSize: '0.75rem' }}>⚠️ Missing Link</span>
+                            <button
+                              onClick={() => {
+                                setLinkingUser(u);
+                                setLinkModalEmployeeId('');
+                                setLinkModalError(null);
+                              }}
+                              className="btn btn-secondary"
+                              style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                              title="Link an Employee from directory"
+                            >
+                              <Link2 size={11} />
+                              Link Employee
+                            </button>
                           </div>
                         ) : (
-                          <span style={{ color: 'var(--text-dim)', fontStyle: 'italic' }}>System / Unlinked</span>
+                          <span style={{ color: 'var(--text-dim)', fontStyle: 'italic' }}>System User</span>
                         )}
                       </td>
                       <td style={{ padding: '0.85rem 1rem' }}>
@@ -273,27 +394,74 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
-                        <span
-                          className="badge"
-                          style={{
-                            background: u.is_active ? 'var(--green-bg)' : 'var(--red-bg)',
-                            color: u.is_active ? 'var(--green)' : 'var(--red)',
-                            border: `1px solid ${u.is_active ? 'var(--green-border)' : 'var(--red-border)'}`,
-                            fontSize: '0.75rem'
-                          }}
-                        >
-                          {u.is_active ? 'Active' : 'Inactive'}
-                        </span>
+                        {u.invitation_pending ? (
+                          <span
+                            className="badge"
+                            style={{
+                              background: 'var(--amber-bg)',
+                              color: 'var(--amber)',
+                              border: '1px solid var(--amber-border)',
+                              fontSize: '0.75rem',
+                              fontWeight: 600
+                            }}
+                          >
+                            Pending Invite
+                          </span>
+                        ) : (
+                          <span
+                            className="badge"
+                            style={{
+                              background: u.is_active ? 'var(--green-bg)' : 'var(--red-bg)',
+                              color: u.is_active ? 'var(--green)' : 'var(--red)',
+                              border: `1px solid ${u.is_active ? 'var(--green-border)' : 'var(--red-border)'}`,
+                              fontSize: '0.75rem'
+                            }}
+                          >
+                            {u.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        )}
                       </td>
                       <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
-                        <button
-                          onClick={() => handleToggleStatus(u.id)}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
-                          title={u.is_active ? 'Deactivate User' : 'Activate User'}
-                        >
-                          {u.is_active ? 'Deactivate' : 'Activate'}
-                        </button>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
+                          {u.invitation_pending && (
+                            <button
+                              onClick={() => handleResendInvitation(u.id, u.email)}
+                              disabled={resendingId === u.id}
+                              className="btn btn-secondary"
+                              style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                              title="Resend Invitation Email"
+                            >
+                              <Send size={12} className={resendingId === u.id ? 'animate-spin' : ''} />
+                              {resendingId === u.id ? 'Sending...' : 'Resend Invite'}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleToggleStatus(u.id)}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
+                            title={u.is_active ? 'Deactivate User' : 'Activate User'}
+                          >
+                            {u.is_active ? 'Deactivate' : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(u.id, u.email)}
+                            disabled={deletingId === u.id || (user ? user.id === u.id : false)}
+                            className="btn btn-secondary"
+                            style={{
+                              fontSize: '0.75rem',
+                              padding: '0.3rem 0.65rem',
+                              color: 'var(--red)',
+                              borderColor: 'rgba(239, 68, 68, 0.3)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem'
+                            }}
+                            title={user && user.id === u.id ? 'Cannot delete your own active account' : 'Delete User'}
+                          >
+                            <Trash2 size={12} className={deletingId === u.id ? 'animate-spin' : ''} />
+                            {deletingId === u.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -319,7 +487,7 @@ export default function AdminUsersPage() {
             <div className="glass-panel" style={{ width: '100%', maxWidth: '520px', padding: '2rem', background: '#FFFFFF', borderRadius: 'var(--radius-lg)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                 <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
-                  Create New User
+                  Invite New User
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
@@ -327,6 +495,22 @@ export default function AdminUsersPage() {
                 >
                   ✕
                 </button>
+              </div>
+
+              <div style={{
+                background: 'var(--blue-bg)',
+                border: '1px solid var(--blue-border)',
+                color: 'var(--blue)',
+                padding: '0.75rem 1rem',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1.25rem',
+                fontSize: '0.825rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <Mail size={16} style={{ flexShrink: 0 }} />
+                <span>An invitation email with a secure link will be sent to the employee via Resend to set their own password.</span>
               </div>
 
               {modalError && (
@@ -337,28 +521,74 @@ export default function AdminUsersPage() {
               )}
 
               <form onSubmit={handleCreateUser}>
-                {/* 1. Linked Employee */}
+                {/* 1. Role Selection */}
                 <div style={{ marginBottom: '1.25rem' }}>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-                    Linked Employee (Optional)
+                    Role Assignment *
                   </label>
+                  <select
+                    className="form-input"
+                    value={selectedRole}
+                    onChange={e => setSelectedRole(e.target.value)}
+                    style={{ width: '100%', fontSize: '0.85rem' }}
+                  >
+                    <option value="employee">Employee</option>
+                    <option value="hr_payroll_user">HR Payroll User</option>
+                    <option value="hr_manager">HR Manager</option>
+                    <option value="hr_payroll_manager">HR Payroll Manager</option>
+                    <option value="admin">Administrator</option>
+                  </select>
+                </div>
+
+                {/* 2. Employee Binding */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                      Linked Employee {selectedRole === 'employee' ? '*' : '(Optional)'}
+                    </label>
+                    {selectedRole === 'employee' && (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--blue)', fontWeight: 600 }}>Required for Employee Role</span>
+                    )}
+                  </div>
+
                   <select
                     className="form-input"
                     value={selectedEmployeeId}
                     onChange={e => handleEmployeeSelect(e.target.value)}
+                    required={selectedRole === 'employee'}
                     style={{ width: '100%', fontSize: '0.85rem' }}
                   >
-                    <option value="">None / System User</option>
-                    {employees.map(emp => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.first_name} {emp.last_name} ({emp.employee_number})
-                      </option>
-                    ))}
+                    <option value="">
+                      {selectedRole === 'employee'
+                        ? '-- Choose Existing Employee from Directory (Required) --'
+                        : 'None / System User (Optional)'}
+                    </option>
+                    {employees.map(emp => {
+                      const isLinked = users.some(u => u.employee_id === emp.id);
+                      return (
+                        <option key={emp.id} value={emp.id} disabled={isLinked}>
+                          {emp.first_name} {emp.last_name} ({emp.employee_number || emp.id}){isLinked ? ' — [Already Linked]' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
+
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+                    {selectedRole === 'employee' ? (
+                      <>
+                        Employee accounts must be linked to an existing personnel record in the Employee Directory.{' '}
+                        <Link href="/employees" target="_blank" style={{ color: 'var(--blue)', fontWeight: 600, textDecoration: 'underline' }}>
+                          Add new employee in Directory ↗
+                        </Link>
+                      </>
+                    ) : (
+                      'System and administrative users can be unlinked, or associated with an existing employee profile.'
+                    )}
+                  </p>
                 </div>
 
-                {/* 2. Work Email */}
-                <div style={{ marginBottom: '1.25rem' }}>
+                {/* 3. Work Email */}
+                <div style={{ marginBottom: '1.75rem' }}>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
                     Work Email *
                   </label>
@@ -371,57 +601,6 @@ export default function AdminUsersPage() {
                     className="form-input"
                     style={{ width: '100%', fontSize: '0.85rem' }}
                   />
-                </div>
-
-                {/* 3. Password (manually entered by Admin, NOT auto-generated) */}
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-                    Password * <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)' }}>(Admin sets password manually)</span>
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="Enter manual user password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    className="form-input"
-                    style={{ width: '100%', fontSize: '0.85rem' }}
-                  />
-                </div>
-
-                {/* 4. Role Selection (No duplicates!) */}
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-                    Role Assignment *
-                  </label>
-                  <select
-                    className="form-input"
-                    value={selectedRole}
-                    onChange={e => setSelectedRole(e.target.value)}
-                    style={{ width: '100%', fontSize: '0.85rem' }}
-                  >
-                    <option value="hr_payroll_user">HR Payroll User</option>
-                    <option value="hr_manager">HR Manager</option>
-                    <option value="hr_payroll_manager">HR Payroll Manager</option>
-                    <option value="employee">Employee</option>
-                    <option value="admin">Administrator</option>
-                  </select>
-                </div>
-
-                {/* 5. Account Status */}
-                <div style={{ marginBottom: '1.75rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-                    Account Status
-                  </label>
-                  <select
-                    className="form-input"
-                    value={accountStatus ? 'active' : 'inactive'}
-                    onChange={e => setAccountStatus(e.target.value === 'active')}
-                    style={{ width: '100%', fontSize: '0.85rem' }}
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
                 </div>
 
                 {/* Actions */}
@@ -438,7 +617,89 @@ export default function AdminUsersPage() {
                     disabled={submitting}
                     className="btn btn-primary"
                   >
-                    {submitting ? 'Creating User...' : 'Create User'}
+                    {submitting ? 'Sending Invitation...' : 'Create & Send Invitation'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Link Employee to User Modal */}
+        {linkingUser && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '1rem'
+          }}>
+            <div className="glass-panel" style={{ width: '100%', maxWidth: '480px', padding: '2rem', background: '#FFFFFF', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+                  Link Employee Profile
+                </h3>
+                <button
+                  onClick={() => setLinkingUser(null)}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 700 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+                Select an active employee from the Employee Directory to link to user account <strong>{linkingUser.email}</strong>.
+              </p>
+
+              {linkModalError && (
+                <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red-border)', color: 'var(--red)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <AlertCircle size={16} />
+                  <span>{linkModalError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleLinkEmployee}>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
+                    Select Employee *
+                  </label>
+                  <select
+                    className="form-input"
+                    value={linkModalEmployeeId}
+                    onChange={e => setLinkModalEmployeeId(e.target.value)}
+                    required
+                    style={{ width: '100%', fontSize: '0.85rem' }}
+                  >
+                    <option value="">-- Choose Employee --</option>
+                    {employees.map(emp => {
+                      const isLinked = users.some(u => u.employee_id === emp.id && u.id !== linkingUser.id);
+                      return (
+                        <option key={emp.id} value={emp.id} disabled={isLinked}>
+                          {emp.first_name} {emp.last_name} ({emp.employee_number}){isLinked ? ' — [Already Linked]' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setLinkingUser(null)}
+                    className="btn btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={linkingLoading || !linkModalEmployeeId}
+                    className="btn btn-primary"
+                  >
+                    {linkingLoading ? 'Linking...' : 'Confirm Link'}
                   </button>
                 </div>
               </form>

@@ -3,12 +3,13 @@ import uuid
 from datetime import date, datetime
 from sqlalchemy.orm import Session
 
-from app.database import SessionLocal
+from app.testing_db import init_isolated_test_db, TestSessionLocal
 from app.models import models
 from app.services.payroll_engine import compute_payroll, evaluate_formula
 
 def test_payroll_engine():
-    db: Session = SessionLocal()
+    init_isolated_test_db(seed_initial=True)
+    db: Session = TestSessionLocal()
     total_tests_run = 0
     passed_tests = 0
 
