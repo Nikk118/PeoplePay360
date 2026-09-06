@@ -11,7 +11,7 @@ router = APIRouter(prefix="/departments", tags=["Departments"])
 @router.get("", response_model=List[DepartmentResponse])
 def list_departments(
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     return db.query(Department).order_by(Department.name).all()
 
@@ -19,7 +19,7 @@ def list_departments(
 def create_department(
     name: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     existing = db.query(Department).filter(Department.name == name).first()
     if existing:

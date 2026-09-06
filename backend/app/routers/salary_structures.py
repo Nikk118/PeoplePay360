@@ -34,7 +34,7 @@ def build_structure_response(struct: models.SalaryStructure) -> SalaryStructureR
 @router.get("", response_model=List[SalaryStructureResponse])
 def list_salary_structures(
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     structures = db.query(models.SalaryStructure).order_by(models.SalaryStructure.name).all()
     return [build_structure_response(s) for s in structures]
@@ -43,7 +43,7 @@ def list_salary_structures(
 def get_salary_structure(
     structure_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     struct = db.query(models.SalaryStructure).filter(models.SalaryStructure.id == structure_id).first()
     if not struct:
@@ -54,7 +54,7 @@ def get_salary_structure(
 def create_salary_structure(
     body: SalaryStructureCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
 ):
     # Check duplicate name
     existing = db.query(models.SalaryStructure).filter(
@@ -98,7 +98,7 @@ def update_salary_structure(
     structure_id: str,
     body: SalaryStructureUpdate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
 ):
     struct = db.query(models.SalaryStructure).filter(models.SalaryStructure.id == structure_id).first()
     if not struct:
@@ -127,7 +127,7 @@ def update_salary_structure(
 def delete_salary_structure(
     structure_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
 ):
     struct = db.query(models.SalaryStructure).filter(models.SalaryStructure.id == structure_id).first()
     if not struct:
@@ -156,7 +156,7 @@ def delete_salary_structure(
 def get_rules_for_structure(
     structure_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     struct = db.query(models.SalaryStructure).filter(models.SalaryStructure.id == structure_id).first()
     if not struct:
@@ -175,7 +175,7 @@ def get_rules_for_structure(
 def list_salary_rules(
     structure_id: Optional[str] = Query(None, description="Filter rules by structure ID"),
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     query = db.query(models.SalaryRule)
     if structure_id:
@@ -187,7 +187,7 @@ def list_salary_rules(
 def get_salary_rule(
     rule_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_user", "hr_payroll_manager"]))
 ):
     rule = db.query(models.SalaryRule).filter(models.SalaryRule.id == rule_id).first()
     if not rule:
@@ -198,7 +198,7 @@ def get_salary_rule(
 def create_salary_rule(
     body: SalaryRuleCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
 ):
     if not body.structure_id:
         raise HTTPException(status_code=400, detail="structure_id is required to create a salary rule")
@@ -244,7 +244,7 @@ def update_salary_rule(
     rule_id: str,
     body: SalaryRuleUpdate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
 ):
     rule = db.query(models.SalaryRule).filter(models.SalaryRule.id == rule_id).first()
     if not rule:
@@ -293,11 +293,19 @@ def update_salary_rule(
 def delete_salary_rule(
     rule_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
+    _: TokenData = Depends(require_roles(["admin", "hr_payroll_manager"]))
 ):
     rule = db.query(models.SalaryRule).filter(models.SalaryRule.id == rule_id).first()
     if not rule:
         raise HTTPException(status_code=404, detail="Salary rule not found")
+
+    # Database integrity check: Prevent deleting salary rules referenced by payslip lines
+    payslip_lines_count = db.query(models.PayslipLine).filter(models.PayslipLine.salary_rule_id == rule_id).count()
+    if payslip_lines_count > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot delete salary rule '{rule.name}' because it is referenced by {payslip_lines_count} existing payslip line(s)."
+        )
 
     name = rule.name
     db.delete(rule)

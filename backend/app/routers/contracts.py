@@ -7,7 +7,7 @@ from sqlalchemy import or_, and_
 from app.database import get_db
 from app.models import models
 from app.schemas.schemas import ContractCreate, ContractResponse, ApplicableContractResponse
-from app.auth.rbac import get_current_user, require_roles, TokenData
+from app.auth.rbac import require_roles, TokenData
 
 router = APIRouter(prefix="/contracts", tags=["Contracts"])
 
@@ -67,15 +67,30 @@ def build_contract_response(c: models.Contract, db: Session) -> ContractResponse
 @router.get("", response_model=List[ContractResponse])
 def list_contracts(
     employee_id: Optional[str] = None,
-    status: Optional[str] = None,
+    status_filter: Optional[str] = Query(None, alias="status"),
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+    trusted_emp_id = app_user.employee_id if app_user else None
+
     query = db.query(models.Contract)
-    if employee_id:
-        query = query.filter(models.Contract.employee_id == employee_id)
-    if status:
-        query = query.filter(models.Contract.status == status)
+    if not is_admin_or_hr:
+        if not trusted_emp_id:
+            return []
+        if employee_id and employee_id != trusted_emp_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Employees can only view their own contracts."
+            )
+        query = query.filter(models.Contract.employee_id == trusted_emp_id)
+    else:
+        if employee_id:
+            query = query.filter(models.Contract.employee_id == employee_id)
+
+    if status_filter:
+        query = query.filter(models.Contract.status == status_filter)
         
     contracts = query.order_by(models.Contract.date_start.desc()).all()
     return [build_contract_response(c, db) for c in contracts]
@@ -91,6 +106,16 @@ def get_applicable_contract(
     """
     Selects the active contract applicable to the specified payroll period [period_start, period_end].
     """
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    if not is_admin_or_hr:
+        app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+        trusted_emp_id = app_user.employee_id if app_user else None
+        if not trusted_emp_id or trusted_emp_id != employee_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Employees can only query their own applicable contract."
+            )
+
     contracts = db.query(models.Contract).filter(
         models.Contract.employee_id == employee_id,
         models.Contract.status.in_(["active", "expired"]),
@@ -129,13 +154,24 @@ def get_contract(
     c = db.query(models.Contract).filter(models.Contract.id == contract_id).first()
     if not c:
         raise HTTPException(status_code=404, detail="Contract not found")
+
+    is_admin_or_hr = any(r in current_user.roles for r in ["admin", "hr_manager", "hr_payroll_user", "hr_payroll_manager"])
+    if not is_admin_or_hr:
+        app_user = db.query(models.AppUser).filter(models.AppUser.id == current_user.user_id).first()
+        trusted_emp_id = app_user.employee_id if app_user else None
+        if not trusted_emp_id or c.employee_id != trusted_emp_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Employees can only view their own contract details."
+            )
+
     return build_contract_response(c, db)
 
 @router.post("", response_model=ContractResponse)
 def create_contract(
     data: ContractCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_manager", "admin"]))
 ):
     emp = db.query(models.Employee).filter(models.Employee.id == data.employee_id).first()
     if not emp:
@@ -152,7 +188,7 @@ def update_contract(
     contract_id: str,
     data: ContractCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_manager", "admin"]))
 ):
     c = db.query(models.Contract).filter(models.Contract.id == contract_id).first()
     if not c:
@@ -169,7 +205,7 @@ def update_contract(
 def delete_contract(
     contract_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_manager", "admin"]))
 ):
     c = db.query(models.Contract).filter(models.Contract.id == contract_id).first()
     if not c:

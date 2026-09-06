@@ -1,74 +1,95 @@
-import urllib.request
-import json
+import unittest
+import sys
+import os
+from fastapi.testclient import TestClient
 
-BASE_URL = "http://127.0.0.1:8000/api"
-emp_id = "e1111111-1111-1111-1111-111111111111"  # Ravi Kumar
-type_id = "t1111111-1111-1111-1111-111111111111" # Paid Annual Leave
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-# 1. Login as HR Manager
-login_req = urllib.request.Request(
-    f"{BASE_URL}/auth/login",
-    data=json.dumps({"email": "hrmanager@peoplepay360.com", "password": "Password123!"}).encode(),
-    headers={"Content-Type": "application/json"}
-)
-hr_token = json.loads(urllib.request.urlopen(login_req).read())["access_token"]
-headers = {"Authorization": f"Bearer {hr_token}", "Content-Type": "application/json"}
+from app.main import app
+from app.testing_db import init_isolated_test_db, TestSessionLocal
+from app.models import models
 
-# 2. Check initial balance
-bal_req = urllib.request.Request(f"{BASE_URL}/time-off/balances?employee_id={emp_id}", headers=headers)
-balances = json.loads(urllib.request.urlopen(bal_req).read())
-initial_annual = next(b for b in balances if b["time_off_type_id"] == type_id)
-print(f"1. Initial Balance -> Allocated: {initial_annual['allocated_days']}, Taken: {initial_annual['taken_days']}, Remaining: {initial_annual['remaining_days']}")
+class TestTimeOffSuite(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_isolated_test_db(seed_initial=True)
+        cls.db = TestSessionLocal()
+        cls.client = TestClient(app)
 
-# 3. Create leave request for Sep 15-17, 2026 (3 days)
-req_data = {
-    "employee_id": emp_id,
-    "time_off_type_id": type_id,
-    "date_from": "2026-09-15",
-    "date_to": "2026-09-17",
-    "reason": "Personal vacation"
-}
-create_req = urllib.request.Request(f"{BASE_URL}/time-off/requests", data=json.dumps(req_data).encode(), headers=headers)
-req_res = json.loads(urllib.request.urlopen(create_req).read())
-req_id = req_res["id"]
-print(f"2. Created Leave Request Duration: {req_res['duration_days']} days (Sep 15-17)")
+        # Login as HR Manager
+        resp = cls.client.post("/api/auth/login", json={"email": "hrmanager@peoplepay360.com", "password": "Password123!"})
+        assert resp.status_code == 200, f"HR login failed: {resp.text}"
+        cls.hr_token = resp.json()["access_token"]
+        cls.hr_headers = {"Authorization": f"Bearer {cls.hr_token}"}
 
-# 4. Approve the request
-app_req = urllib.request.Request(f"{BASE_URL}/time-off/requests/{req_id}/approve", data=b"{}", headers=headers, method="PUT")
-app_res = json.loads(urllib.request.urlopen(app_req).read())
-print(f"3. Request Approval Status: {app_res['status']}")
+        # Find target employee and paid annual leave type
+        cls.target_emp = cls.db.query(models.Employee).filter(models.Employee.email != "hrmanager@peoplepay360.com").first()
+        assert cls.target_emp is not None
+        cls.emp_id = cls.target_emp.id
 
-# 5. Verify updated balance (Allocated: 20, Used: 3, Remaining: 17)
-bal_req2 = urllib.request.Request(f"{BASE_URL}/time-off/balances?employee_id={emp_id}", headers=headers)
-balances2 = json.loads(urllib.request.urlopen(bal_req2).read())
-updated_annual = next(b for b in balances2 if b["time_off_type_id"] == type_id)
-print(f"4. Updated Balance -> Allocated: {updated_annual['allocated_days']}, Taken: {updated_annual['taken_days']}, Remaining: {updated_annual['remaining_days']}")
+        cls.paid_type = cls.db.query(models.TimeOffType).filter(models.TimeOffType.code == "ANNUAL").first()
+        assert cls.paid_type is not None
+        cls.type_id = cls.paid_type.id
 
-# 6. Test duplicate approval protection (re-approving must NOT double deduct)
-app_dup = urllib.request.Request(f"{BASE_URL}/time-off/requests/{req_id}/approve", data=b"{}", headers=headers, method="PUT")
-urllib.request.urlopen(app_dup)
-bal_req3 = urllib.request.Request(f"{BASE_URL}/time-off/balances?employee_id={emp_id}", headers=headers)
-balances3 = json.loads(urllib.request.urlopen(bal_req3).read())
-dup_annual = next(b for b in balances3 if b["time_off_type_id"] == type_id)
-print(f"5. Duplicate Approval Protection -> Taken days remained: {dup_annual['taken_days']}")
+    @classmethod
+    def tearDownClass(cls):
+        cls.db.close()
 
-# 7. Test insufficient balance protection (attempting 25 days when remaining is 17)
-big_req_data = {
-    "employee_id": emp_id,
-    "time_off_type_id": type_id,
-    "date_from": "2026-10-01",
-    "date_to": "2026-10-25",
-    "reason": "Excessive leave"
-}
-big_create = urllib.request.Request(f"{BASE_URL}/time-off/requests", data=json.dumps(big_req_data).encode(), headers=headers)
-big_res = json.loads(urllib.request.urlopen(big_create).read())
-big_app = urllib.request.Request(f"{BASE_URL}/time-off/requests/{big_res['id']}/approve", data=b"{}", headers=headers, method="PUT")
+    def test_01_leave_workflow_and_balance_deduction(self):
+        # 1. Check initial balances
+        bal_resp = self.client.get(f"/api/time-off/balances?employee_id={self.emp_id}", headers=self.hr_headers)
+        self.assertEqual(bal_resp.status_code, 200)
+        balances = bal_resp.json()
+        initial_annual = next(b for b in balances if b["time_off_type_id"] == self.type_id)
+        init_remaining = initial_annual["remaining_days"]
 
-try:
-    urllib.request.urlopen(big_app)
-    print("FAILED: Insufficient balance check did not throw error!")
-except urllib.error.HTTPError as err:
-    err_msg = json.loads(err.read())["detail"]
-    print(f"6. Insufficient Balance Protection -> Caught expected HTTP 400: '{err_msg}'")
+        # 2. Create leave request for Sep 15-17, 2026 (3 days)
+        req_data = {
+            "employee_id": self.emp_id,
+            "time_off_type_id": self.type_id,
+            "date_from": "2026-09-15",
+            "date_to": "2026-09-17",
+            "reason": "Personal vacation"
+        }
+        create_resp = self.client.post("/api/time-off/requests", json=req_data, headers=self.hr_headers)
+        self.assertEqual(create_resp.status_code, 200)
+        req_res = create_resp.json()
+        req_id = req_res["id"]
+        self.assertEqual(req_res["duration_days"], 3.0)
 
-print("\n--- ALL DEMO ACCEPTANCE TESTS PASSED! ---")
+        # 3. Approve the request
+        app_resp = self.client.put(f"/api/time-off/requests/{req_id}/approve", headers=self.hr_headers)
+        self.assertEqual(app_resp.status_code, 200)
+        self.assertEqual(app_resp.json()["status"], "approved")
+
+        # 4. Verify updated balance
+        bal_resp2 = self.client.get(f"/api/time-off/balances?employee_id={self.emp_id}", headers=self.hr_headers)
+        self.assertEqual(bal_resp2.status_code, 200)
+        updated_annual = next(b for b in bal_resp2.json() if b["time_off_type_id"] == self.type_id)
+        self.assertEqual(updated_annual["remaining_days"], init_remaining - 3.0)
+
+        # 5. Duplicate approval protection
+        app_dup = self.client.put(f"/api/time-off/requests/{req_id}/approve", headers=self.hr_headers)
+        self.assertEqual(app_dup.status_code, 200)
+        bal_resp3 = self.client.get(f"/api/time-off/balances?employee_id={self.emp_id}", headers=self.hr_headers)
+        dup_annual = next(b for b in bal_resp3.json() if b["time_off_type_id"] == self.type_id)
+        self.assertEqual(dup_annual["remaining_days"], init_remaining - 3.0)
+
+        # 6. Insufficient balance protection
+        big_req_data = {
+            "employee_id": self.emp_id,
+            "time_off_type_id": self.type_id,
+            "date_from": "2026-10-01",
+            "date_to": "2026-10-31",
+            "reason": "Excessive leave"
+        }
+        big_create = self.client.post("/api/time-off/requests", json=big_req_data, headers=self.hr_headers)
+        self.assertEqual(big_create.status_code, 200)
+        big_id = big_create.json()["id"]
+
+        big_app = self.client.put(f"/api/time-off/requests/{big_id}/approve", headers=self.hr_headers)
+        self.assertEqual(big_app.status_code, 400)
+        self.assertIn("insufficient", big_app.json()["detail"].lower())
+
+if __name__ == "__main__":
+    unittest.main()

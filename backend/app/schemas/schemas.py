@@ -1,11 +1,27 @@
-from pydantic import BaseModel, EmailStr
+import re
+from pydantic import BaseModel, Field, model_validator, field_validator, ConfigDict
 from typing import List, Optional
 from datetime import datetime, date
+
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
+
+def validate_email_str(value: str) -> str:
+    if not value or not isinstance(value, str):
+        raise ValueError("Email cannot be empty")
+    cleaned = value.strip().lower()
+    if not EMAIL_REGEX.match(cleaned):
+        raise ValueError("Invalid email address format")
+    return cleaned
 
 # Auth Schemas
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return validate_email_str(v)
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -44,6 +60,11 @@ class UserCreate(BaseModel):
     is_active: Optional[bool] = None
     new_employee: Optional[NewEmployeeCreateInput] = None
 
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return validate_email_str(v)
+
 class UserLinkEmployee(BaseModel):
     employee_id: str
 
@@ -72,8 +93,7 @@ class DepartmentResponse(BaseModel):
     id: str
     name: str
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Employee Schemas
 class EmployeeBase(BaseModel):
@@ -109,8 +129,7 @@ class EmployeeResponse(EmployeeBase):
     schedule_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Working Schedule Schemas
 class ScheduleLineBase(BaseModel):
@@ -124,8 +143,7 @@ class ScheduleLineCreate(ScheduleLineBase):
 
 class ScheduleLineResponse(ScheduleLineBase):
     id: str
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class WorkingScheduleBase(BaseModel):
     name: str
@@ -139,8 +157,7 @@ class WorkingScheduleResponse(WorkingScheduleBase):
     lines: List[ScheduleLineResponse] = []
     created_at: datetime
     updated_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Contract Schemas
 class ContractBase(BaseModel):
@@ -152,12 +169,18 @@ class ContractBase(BaseModel):
     job_title: Optional[str] = None
     date_start: date
     date_end: Optional[date] = None
-    wage: float = 0.0
+    wage: float = Field(0.0, ge=0.0)
     wage_type: str = "monthly"
     salary_structure_id: Optional[str] = None
     working_schedule_id: Optional[str] = None
     status: str = "active"
     notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_contract_dates(self):
+        if self.date_end and self.date_end < self.date_start:
+            raise ValueError("Contract end date cannot be earlier than start date")
+        return self
 
 class ContractCreate(ContractBase):
     pass
@@ -170,8 +193,8 @@ class ContractResponse(ContractBase):
     schedule_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    class Config:
-        from_attributes = True
+    has_overlap_warning: Optional[bool] = False
+    model_config = ConfigDict(from_attributes=True)
 
 class ApplicableContractResponse(BaseModel):
     period_start: date
@@ -181,12 +204,6 @@ class ApplicableContractResponse(BaseModel):
     status_message: str
 
 # Attendance Schemas
-class CheckInRequest(BaseModel):
-    employee_id: Optional[str] = None
-
-class CheckOutRequest(BaseModel):
-    attendance_id: str
-
 class AttendanceCreate(BaseModel):
     employee_id: str
     check_in: datetime
@@ -195,11 +212,23 @@ class AttendanceCreate(BaseModel):
     is_manual_edit: bool = True
     notes: Optional[str] = None
 
+    @model_validator(mode="after")
+    def validate_attendance_times(self):
+        if self.check_out and self.check_out < self.check_in:
+            raise ValueError("Check-out time cannot be earlier than check-in time")
+        return self
+
 class AttendanceUpdate(BaseModel):
     check_in: Optional[datetime] = None
     check_out: Optional[datetime] = None
     status: Optional[str] = None
     notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_update_times(self):
+        if self.check_in and self.check_out and self.check_out < self.check_in:
+            raise ValueError("Check-out time cannot be earlier than check-in time")
+        return self
 
 class AttendanceResponse(BaseModel):
     id: str
@@ -215,16 +244,29 @@ class AttendanceResponse(BaseModel):
     notes: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AttendanceSummaryResponse(BaseModel):
-    total_records: int
-    present_days: float
-    late_days: float
-    half_days: float
-    absent_days: float
-    total_worked_hours: float
+    employee_id: Optional[str] = None
+    employee_name: Optional[str] = None
+    period_start: Optional[date] = None
+    period_end: Optional[date] = None
+    total_records: int = 0
+    worked_days: float = 0.0
+    present_days: float = 0.0
+    present_records: Optional[int] = 0
+    present_count: Optional[int] = 0
+    late_days: float = 0.0
+    late_records: Optional[int] = 0
+    late_count: Optional[int] = 0
+    half_days: float = 0.0
+    half_day_records: Optional[int] = 0
+    half_day_count: Optional[int] = 0
+    absent_days: float = 0.0
+    absent_records: Optional[int] = 0
+    absent_count: Optional[int] = 0
+    total_worked_hours: float = 0.0
+    by_status: dict = {}
 
 # Time Off Schemas
 class TimeOffTypeBase(BaseModel):
@@ -243,16 +285,21 @@ class TimeOffTypeCreate(TimeOffTypeBase):
 class TimeOffTypeResponse(TimeOffTypeBase):
     id: str
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TimeOffAllocationCreate(BaseModel):
     employee_id: str
     time_off_type_id: str
-    allocated_days: float
+    allocated_days: float = Field(..., gt=0.0)
     date_from: date
     date_to: date
     notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_allocation_dates(self):
+        if self.date_to < self.date_from:
+            raise ValueError("Allocation end date cannot be earlier than start date")
+        return self
 
 class TimeOffAllocationResponse(BaseModel):
     id: str
@@ -268,8 +315,7 @@ class TimeOffAllocationResponse(BaseModel):
     status: str
     notes: Optional[str] = None
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TimeOffRequestCreate(BaseModel):
     employee_id: Optional[str] = None
@@ -278,12 +324,20 @@ class TimeOffRequestCreate(BaseModel):
     date_to: date
     reason: Optional[str] = None
 
+    @model_validator(mode="after")
+    def validate_request_dates(self):
+        if self.date_to < self.date_from:
+            raise ValueError("Leave end date cannot be earlier than start date")
+        return self
+
 class TimeOffRequestResponse(BaseModel):
     id: str
     employee_id: str
     employee_name: Optional[str] = None
+    department_name: Optional[str] = None
     time_off_type_id: str
     time_off_type_name: Optional[str] = None
+    time_off_type_code: Optional[str] = None
     allocation_id: Optional[str] = None
     date_from: date
     date_to: date
@@ -291,12 +345,12 @@ class TimeOffRequestResponse(BaseModel):
     reason: Optional[str] = None
     status: str
     approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
     approver_name: Optional[str] = None
     response_date: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class LeaveBalanceResponse(BaseModel):
     employee_id: str
@@ -342,8 +396,7 @@ class SalaryRuleResponse(SalaryRuleBase):
     id: str
     structure_id: str
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class SalaryStructureBase(BaseModel):
     name: str
@@ -364,8 +417,7 @@ class SalaryStructureResponse(SalaryStructureBase):
     rules: List[SalaryRuleResponse] = []
     created_at: datetime
     updated_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Payrun Schemas
 class PayrunCreate(BaseModel):
@@ -405,12 +457,13 @@ class PayslipLineResponse(BaseModel):
     category: str
     sequence: int
     amount: float
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PayslipResponse(BaseModel):
     id: str
     payrun_id: str
+    payrun_name: Optional[str] = None
+    salary_structure_name: Optional[str] = None
     employee_id: str
     employee_number: Optional[str] = None
     employee_name: Optional[str] = None
@@ -431,8 +484,7 @@ class PayslipResponse(BaseModel):
     lines: List[PayslipLineResponse] = []
     created_at: datetime
     updated_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PayrunResponse(BaseModel):
     id: str
@@ -451,9 +503,7 @@ class PayrunResponse(BaseModel):
     payslips: List[PayslipResponse] = []
     created_at: datetime
     updated_at: datetime
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)
 
 # Dashboard & Reports Schemas
 class SelectedPeriodInfo(BaseModel):
@@ -497,15 +547,6 @@ class PayrollTrendItem(BaseModel):
     payslip_count: int = 0
     status: str
 
-class AttendanceSummaryResponse(BaseModel):
-    total_records: int = 0
-    present_records: int = 0
-    absent_records: int = 0
-    half_day_records: int = 0
-    late_records: int = 0
-    total_worked_hours: float = 0.0
-    by_status: dict = {}
-
 class TimeOffTypeSummaryItem(BaseModel):
     type_name: str
     code: str
@@ -536,4 +577,3 @@ class DashboardOverviewResponse(BaseModel):
     attendance: AttendanceSummaryResponse
     time_off: TimeOffSummaryResponse
     warnings: List[DashboardWarningItem]
-

@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_
+
 
 from app.database import get_db
 from app.models import models

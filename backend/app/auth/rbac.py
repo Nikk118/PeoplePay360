@@ -26,6 +26,13 @@ def get_current_user(
     if not user:
         raise credentials_exception
     
+    # Authoritative DB synchronization: never trust stale/manipulated JWT values
+    token_data.employee_id = user.employee_id
+    token_data.email = user.email
+    db_roles = [r.role for r in user.roles] if user.roles else []
+    if db_roles:
+        token_data.roles = db_roles
+    
     return token_data
 
 def require_roles(allowed_roles: List[str]):

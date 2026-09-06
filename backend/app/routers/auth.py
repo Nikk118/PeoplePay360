@@ -144,7 +144,7 @@ def set_password(data: SetPasswordRequest, db: Session = Depends(get_db)):
 @user_router.get("", response_model=List[UserResponse])
 def list_users(
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin"]))
+    _: TokenData = Depends(require_roles(["admin"]))
 ):
     users = db.query(AppUser).all()
     results = []
@@ -170,7 +170,7 @@ def list_users(
 def create_user(
     data: UserCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin"]))
+    _: TokenData = Depends(require_roles(["admin"]))
 ):
     cleaned_email = data.email.strip().lower()
     existing = db.query(AppUser).filter(AppUser.email == cleaned_email).first()
@@ -335,7 +335,7 @@ def create_user(
 def resend_invitation(
     user_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin"]))
+    _: TokenData = Depends(require_roles(["admin"]))
 ):
     user = db.query(AppUser).filter(AppUser.id == user_id).first()
     if not user:
@@ -396,7 +396,7 @@ def resend_invitation(
 def toggle_user_status(
     user_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin"]))
+    _: TokenData = Depends(require_roles(["admin"]))
 ):
     user = db.query(AppUser).filter(AppUser.id == user_id).first()
     if not user:
@@ -448,7 +448,7 @@ def link_user_to_employee(
     user_id: str,
     data: UserLinkEmployee,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["admin"]))
+    _: TokenData = Depends(require_roles(["admin"]))
 ):
     user = db.query(AppUser).filter(AppUser.id == user_id).first()
     if not user:

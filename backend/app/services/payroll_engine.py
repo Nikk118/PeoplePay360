@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_, func
+from sqlalchemy import or_
 
 from app.models import models
 from simpleeval import SimpleEval, NameNotDefined, FunctionNotDefined

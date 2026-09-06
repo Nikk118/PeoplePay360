@@ -2,7 +2,7 @@ from typing import List, Optional
 from datetime import datetime, date, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_
+from sqlalchemy import or_
 
 from app.database import get_db
 from app.models import models
@@ -12,7 +12,7 @@ from app.schemas.schemas import (
     TimeOffRequestCreate, TimeOffRequestResponse,
     LeaveBalanceResponse
 )
-from app.auth.rbac import get_current_user, require_roles, TokenData
+from app.auth.rbac import require_roles, TokenData
 
 router = APIRouter(prefix="/time-off", tags=["Time Off"])
 
@@ -29,7 +29,7 @@ def calculate_duration_days(date_from: date, date_to: date) -> float:
 @router.get("/types", response_model=List[TimeOffTypeResponse])
 def list_time_off_types(
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     return db.query(models.TimeOffType).filter(models.TimeOffType.active == True).order_by(models.TimeOffType.name).all()
 
@@ -37,7 +37,7 @@ def list_time_off_types(
 def create_time_off_type(
     data: TimeOffTypeCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     existing = db.query(models.TimeOffType).filter(
         or_(models.TimeOffType.name == data.name, models.TimeOffType.code == data.code)
@@ -114,7 +114,7 @@ def list_allocations(
 def create_allocation(
     data: TimeOffAllocationCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     emp = db.query(models.Employee).filter(models.Employee.id == data.employee_id).first()
     if not emp:
@@ -143,7 +143,7 @@ def create_allocation(
 def approve_allocation(
     allocation_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     alloc = db.query(models.TimeOffAllocation).filter(models.TimeOffAllocation.id == allocation_id).first()
     if not alloc:
@@ -158,7 +158,7 @@ def approve_allocation(
 def refuse_allocation(
     allocation_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     alloc = db.query(models.TimeOffAllocation).filter(models.TimeOffAllocation.id == allocation_id).first()
     if not alloc:

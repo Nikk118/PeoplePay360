@@ -52,7 +52,7 @@ def build_schedule_response(sched: models.WorkingSchedule) -> WorkingScheduleRes
 @router.get("", response_model=List[WorkingScheduleResponse])
 def list_schedules(
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     schedules = db.query(models.WorkingSchedule).order_by(models.WorkingSchedule.name).all()
     return [build_schedule_response(s) for s in schedules]
@@ -61,7 +61,7 @@ def list_schedules(
 def get_schedule(
     schedule_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["employee", "hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     sched = db.query(models.WorkingSchedule).filter(models.WorkingSchedule.id == schedule_id).first()
     if not sched:
@@ -72,7 +72,7 @@ def get_schedule(
 def create_schedule(
     data: WorkingScheduleCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     existing = db.query(models.WorkingSchedule).filter(models.WorkingSchedule.name == data.name).first()
     if existing:
@@ -100,7 +100,7 @@ def update_schedule(
     schedule_id: str,
     data: WorkingScheduleCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     sched = db.query(models.WorkingSchedule).filter(models.WorkingSchedule.id == schedule_id).first()
     if not sched:
@@ -128,7 +128,7 @@ def update_schedule(
 def delete_schedule(
     schedule_id: str,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
+    _: TokenData = Depends(require_roles(["hr_manager", "hr_payroll_user", "hr_payroll_manager", "admin"]))
 ):
     sched = db.query(models.WorkingSchedule).filter(models.WorkingSchedule.id == schedule_id).first()
     if not sched:

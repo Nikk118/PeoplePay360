@@ -209,6 +209,50 @@ class TestEmployeeRBAC(unittest.TestCase):
         cls.db.add(cls.att_b)
         cls.db.flush()
 
+        # HR Payroll User (role: hr_payroll_user)
+        cls.user_payroll = models.AppUser(
+            id="user_payroll",
+            email="payrolluser@peoplepay360.com",
+            password_hash=pwd_hash,
+            is_active=True
+        )
+        cls.db.add(cls.user_payroll)
+        cls.db.flush()
+        cls.db.add(models.UserRole(user_id=cls.user_payroll.id, role="hr_payroll_user"))
+
+        # Salary Structure & Contracts
+        cls.struct = models.SalaryStructure(
+            id="struct_test",
+            name="Test Salary Structure",
+            description="Test structure",
+            active=True
+        )
+        cls.db.add(cls.struct)
+        cls.db.flush()
+
+        cls.contract_a = models.Contract(
+            id="contract_a",
+            employee_id="emp_a",
+            name="Alice Contract",
+            contract_type="permanent",
+            date_start=date(2026, 1, 1),
+            wage=50000.0,
+            salary_structure_id="struct_test",
+            status="active"
+        )
+        cls.contract_b = models.Contract(
+            id="contract_b",
+            employee_id="emp_b",
+            name="Bob Contract",
+            contract_type="permanent",
+            date_start=date(2026, 1, 1),
+            wage=55000.0,
+            salary_structure_id="struct_test",
+            status="active"
+        )
+        cls.db.add_all([cls.contract_a, cls.contract_b])
+        cls.db.flush()
+
         cls.db.commit()
 
     @classmethod
@@ -507,6 +551,93 @@ class TestEmployeeRBAC(unittest.TestCase):
 
         resp_att = self.client.get("/api/attendance", headers=headers)
         self.assertEqual(resp_att.status_code, 200)
+
+    # ==================== CONTRACTS & PAYROLL RBAC REGRESSION TESTS ====================
+
+    def test_26_employee_contracts_object_level_scoping(self):
+        """Employee A listing contracts only sees their own contract"""
+        headers = self.get_auth_headers("alice@peoplepay360.com")
+        resp = self.client.get("/api/contracts", headers=headers)
+        self.assertEqual(resp.status_code, 200)
+        contracts = resp.json()
+        self.assertEqual(len(contracts), 1)
+        self.assertEqual(contracts[0]["employee_id"], "emp_a")
+
+    def test_27_employee_a_cannot_view_employee_b_contract_by_id(self):
+        """Employee A attempting to view Employee B's contract by ID returns 403"""
+        headers = self.get_auth_headers("alice@peoplepay360.com")
+        resp = self.client.get("/api/contracts/contract_b", headers=headers)
+        self.assertEqual(resp.status_code, 403)
+        self.assertIn("Access denied", resp.json()["detail"])
+
+    def test_28_employee_a_cannot_query_applicable_contract_for_employee_b(self):
+        """Employee A querying applicable contract for Employee B returns 403"""
+        headers = self.get_auth_headers("alice@peoplepay360.com")
+        resp = self.client.get("/api/contracts/applicable?employee_id=emp_b&period_start=2026-09-01&period_end=2026-09-30", headers=headers)
+        self.assertEqual(resp.status_code, 403)
+        self.assertIn("Access denied", resp.json()["detail"])
+
+    def test_29_employee_cannot_create_or_modify_contracts(self):
+        """Employee role cannot create, edit or delete contracts (403)"""
+        headers = self.get_auth_headers("alice@peoplepay360.com")
+        # Create
+        resp_create = self.client.post("/api/contracts", json={
+            "employee_id": "emp_a",
+            "name": "Hacked Contract",
+            "date_start": "2026-01-01",
+            "wage": 999999.0
+        }, headers=headers)
+        self.assertEqual(resp_create.status_code, 403)
+
+        # Delete
+        resp_del = self.client.delete("/api/contracts/contract_a", headers=headers)
+        self.assertEqual(resp_del.status_code, 403)
+
+    def test_30_hr_manager_no_access_to_payroll_features(self):
+        """HR Manager is strictly denied access to Payruns, Payslips, and Salary Structures"""
+        headers = self.get_auth_headers("hr@peoplepay360.com")
+
+        resp_pr = self.client.get("/api/payruns", headers=headers)
+        self.assertEqual(resp_pr.status_code, 403)
+
+        resp_ps = self.client.get("/api/payslips", headers=headers)
+        self.assertEqual(resp_ps.status_code, 403)
+
+        resp_ss = self.client.get("/api/salary-structures", headers=headers)
+        self.assertEqual(resp_ss.status_code, 403)
+
+    def test_31_hr_payroll_user_cannot_delete_payruns_or_structures(self):
+        """HR Payroll User has read/create/update but cannot delete payruns or salary structures (403)"""
+        headers = self.get_auth_headers("payrolluser@peoplepay360.com")
+
+        # Can read salary structures
+        resp_ss = self.client.get("/api/salary-structures", headers=headers)
+        self.assertEqual(resp_ss.status_code, 200)
+
+        # Cannot delete salary structure
+        resp_del_ss = self.client.delete("/api/salary-structures/struct_test", headers=headers)
+        self.assertEqual(resp_del_ss.status_code, 403)
+
+        # Cannot delete payrun
+        resp_del_pr = self.client.delete("/api/payruns/nonexistent_payrun", headers=headers)
+        self.assertEqual(resp_del_pr.status_code, 403)
+
+    def test_32_auth_login_invalid_email_format(self):
+        """Login request with invalid email format fails Pydantic validation (422)"""
+        resp = self.client.post("/api/auth/login", json={"email": "not-an-email", "password": "Password123!"})
+        self.assertEqual(resp.status_code, 422)
+
+    def test_33_contract_date_validation(self):
+        """Contract with date_end earlier than date_start fails validation (422)"""
+        admin_headers = self.get_auth_headers("admin@peoplepay360.com")
+        resp = self.client.post("/api/contracts", json={
+            "employee_id": "emp_a",
+            "name": "Invalid Date Contract",
+            "date_start": "2026-12-31",
+            "date_end": "2026-01-01",
+            "wage": 50000.0
+        }, headers=admin_headers)
+        self.assertEqual(resp.status_code, 422)
 
 if __name__ == "__main__":
     unittest.main()
